@@ -1,0 +1,18 @@
+{
+  "name": "jobsnap",
+  "version": "0.1.0",
+  "description": "Save BDJobs job circulars as clean, LLM-friendly Markdown",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "jobsnap": "./cli/jobsnap.js"
+  },
+  "scripts": {
+    "jobsnap": "node ./cli/jobsnap.js",
+    "smoke": "node ./cli/jobsnap.js --help"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
+

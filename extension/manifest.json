@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "JobSnap",
+  "version": "0.1.0",
+  "description": "Download BDJobs job circulars as Markdown",
+  "permissions": ["activeTab", "downloads"],
+  "host_permissions": ["https://bdjobs.com/jobs/details/*"],
+  "action": {
+    "default_title": "JobSnap",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://bdjobs.com/jobs/details/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
+
