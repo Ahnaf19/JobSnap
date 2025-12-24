@@ -86,7 +86,7 @@ function cleanSummaryValues(summary) {
 }
 
 function sliceSection(text, heading, { startIndex = 0 } = {}) {
-  const pattern = new RegExp(`(^|\\n)\\s*${escapeRegex(heading)}\\s*:?(\\n|$)`, "im");
+  const pattern = new RegExp(`(^|\\n)\\s*${escapeRegex(heading)}\\s*:?(\\s*\\n|\\s*$)`, "im");
   const match = pattern.exec(text.slice(startIndex));
   if (!match) return null;
   const absoluteIndex = startIndex + match.index;
@@ -143,8 +143,11 @@ function parseBullets(sectionText) {
 function stripHeading(chunk, heading) {
   const lines = String(chunk ?? "").split("\n");
   while (lines.length && !lines[0].trim()) lines.shift();
-  if (lines.length && lines[0].trim().toLowerCase() === heading.trim().toLowerCase()) {
-    lines.shift();
+  if (lines.length) {
+    const normalize = (value) => value.trim().replace(/:$/, "").toLowerCase();
+    if (normalize(lines[0]) === normalize(heading)) {
+      lines.shift();
+    }
   }
   return lines.join("\n").trim();
 }
