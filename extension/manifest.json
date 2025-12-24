@@ -3,8 +3,8 @@
   "name": "JobSnap",
   "version": "0.1.0",
   "description": "Download BDJobs job circulars as Markdown",
-  "permissions": ["activeTab", "downloads"],
-  "host_permissions": ["https://bdjobs.com/jobs/details/*"],
+  "permissions": ["activeTab", "downloads", "scripting"],
+  "host_permissions": ["https://bdjobs.com/*", "https://*.bdjobs.com/*"],
   "action": {
     "default_title": "JobSnap",
     "default_popup": "popup.html"
@@ -16,4 +16,3 @@
     }
   ]
 }
-

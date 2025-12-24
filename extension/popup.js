@@ -8,6 +8,18 @@ async function getActiveTab() {
   return tab ?? null;
 }
 
+async function injectContentScript(tabId) {
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["content.js"]
+    });
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
 function downloadMarkdown({ filename, markdown }) {
   const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -32,6 +44,12 @@ document.getElementById("download")?.addEventListener("click", async () => {
     return;
   }
 
+  const injected = await injectContentScript(tab.id);
+  if (!injected) {
+    setStatus("Could not inject content script. Make sure this is a BDJobs job page.");
+    return;
+  }
+
   try {
     const response = await chrome.tabs.sendMessage(tab.id, { type: "JOBSNAP_EXTRACT_MD" });
     if (!response?.markdown) {
@@ -44,4 +62,3 @@ document.getElementById("download")?.addEventListener("click", async () => {
     setStatus(String(err?.message ?? err));
   }
 });
-
