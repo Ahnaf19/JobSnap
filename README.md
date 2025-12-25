@@ -1,4 +1,14 @@
-# JobSnap — save the JD once, stop hunting it later
+<div align="center">
+  <img src="extension/img/icon-128.png" width="84" alt="JobSnap icon" />
+  <h1>JobSnap</h1>
+  <p>Save the JD once, stop hunting it later.</p>
+  <p>
+    <img src="https://img.shields.io/badge/version-v0.2.0-ff6a3d" alt="Version v0.2.0" />
+    <img src="https://img.shields.io/badge/node-18%2B-3c873a?logo=node.js&logoColor=white" alt="Node 18+" />
+    <img src="https://img.shields.io/badge/javascript-ES2022-f7df1e?logo=javascript&logoColor=000" alt="JavaScript ES2022" />
+    <img src="https://img.shields.io/badge/extension-Chrome_MV3-4285f4?logo=googlechrome&logoColor=white" alt="Chrome MV3" />
+  </p>
+</div>
 
 JobSnap snapshots a BDJobs circular to your disk (raw HTML, structured JSON, and clean Markdown) the moment you apply.  
 The CLI is the v0.2 focus; the extension reuses the same parser.
