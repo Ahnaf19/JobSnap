@@ -28,7 +28,13 @@ function renderFrontMatter(job) {
 function renderSummary(summary) {
   if (!summary || Object.keys(summary).length === 0) return null;
   const lines = ["## Summary"];
-  for (const [key, value] of Object.entries(summary)) {
+  const preferredOrder = ["vacancy", "experience", "age", "location", "salary", "published"];
+  const orderedKeys = [
+    ...preferredOrder.filter((key) => key in summary),
+    ...Object.keys(summary).filter((key) => !preferredOrder.includes(key))
+  ];
+  for (const key of orderedKeys) {
+    const value = summary[key];
     const label = key
       .split("_")
       .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))

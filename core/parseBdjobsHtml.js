@@ -85,6 +85,43 @@ function cleanSummaryValues(summary) {
   return cleaned;
 }
 
+function extractNgStateJson(html) {
+  const match = String(html ?? "").match(
+    /<script[^>]*id=["']ng-state["'][^>]*>([\s\S]*?)<\/script>/i
+  );
+  if (!match?.[1]) return null;
+  const jsonText = match[1].trim();
+  if (!jsonText) return null;
+  try {
+    return JSON.parse(jsonText);
+  } catch {
+    return null;
+  }
+}
+
+function extractJobDetailsFromState(state) {
+  if (!state || typeof state !== "object") return null;
+  for (const entry of Object.values(state)) {
+    if (!entry?.u || !String(entry.u).includes("Job-Details")) continue;
+    const data = entry?.b?.data;
+    if (Array.isArray(data) && data.length) return data[0];
+  }
+  return null;
+}
+
+function splitCommaList(value) {
+  if (!value) return null;
+  const items = String(value)
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return items.length ? items : null;
+}
+
+function normalizeCommaSpace(value) {
+  return String(value ?? "").replace(/,\s*/g, ", ").trim();
+}
+
 function sliceSection(text, heading, { startIndex = 0 } = {}) {
   const pattern = new RegExp(`(^|\\n)\\s*${escapeRegex(heading)}\\s*:?(\\s*\\n|\\s*$)`, "im");
   const match = pattern.exec(text.slice(startIndex));
@@ -138,6 +175,31 @@ function parseBullets(sectionText) {
     if (bullet) bullets.push(bullet);
   }
   return bullets;
+}
+
+function parseHtmlBullets(htmlFragment) {
+  if (!htmlFragment) return null;
+  const text = htmlToText(htmlFragment);
+  const bullets = parseBullets(text);
+  return bullets.length ? bullets : null;
+}
+
+function parseLooseLines(text, { dropHeadings = [] } = {}) {
+  const dropSet = new Set(dropHeadings.map((item) => item.toLowerCase()));
+  const shouldDrop = (line) => {
+    const lowered = line.toLowerCase();
+    if (dropSet.has(lowered)) return true;
+    for (const heading of dropSet) {
+      if (lowered === `${heading}:`) return true;
+    }
+    return false;
+  };
+  const lines = normalizeWhitespace(text)
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line) => !shouldDrop(line));
+  return lines.length ? lines : null;
 }
 
 function stripHeading(chunk, heading) {
@@ -307,13 +369,126 @@ function parseCompensation(sectionText) {
 }
 
 function parseCompanyInfo(sectionText) {
-  const cleaned = normalizeWhitespace(stripAnyHeading(sectionText, ["Company Information"]));
+  const cleaned = normalizeWhitespace(stripAnyHeading(sectionText, ["Company Information"]))
+    .split("\n")
+    .filter((line) => !/more jobs from this company/i.test(line))
+    .join("\n");
   const details = extractDetailsFromLines(cleaned, { skipHeadings: ["Company Information"] });
   if (Object.keys(details).length) return { details };
   return cleaned ? { raw_text: cleaned } : null;
 }
 
-export function parseBdjobsHtml({ html, url, savedAt = new Date().toISOString(), jobId = null } = {}) {
+function parseAdditionalRequirementsHtml(htmlFragment) {
+  if (!htmlFragment) return null;
+  const text = htmlToText(htmlFragment);
+  const sections = extractSubsectionMap(text, [
+    { key: "additional_requirements", title: "Requirements" },
+    { key: "preferred_qualifications", title: "Preferred Qualifications" }
+  ]);
+  if (sections) return sections;
+  const bullets = parseBullets(text);
+  if (bullets.length) return { additional_requirements: { bullets } };
+  const cleaned = normalizeWhitespace(text);
+  if (cleaned) return { additional_requirements: { text: cleaned } };
+  return null;
+}
+
+function parseJobDetails(details, { url, savedAt, jobId } = {}) {
+  if (!details) return null;
+
+  const parsedJobId = jobId ?? details.JobId ?? details.JobID ?? null;
+  const title = details.JobTitle ?? details.JobTitleEN ?? details.JobTitleENG ?? null;
+  const company =
+    details.CompanyNameENG ??
+    details.CompnayName ??
+    details.CompanyName ??
+    details.CompanyNameEn ??
+    null;
+
+  const educationBullets = parseHtmlBullets(details.EducationRequirements);
+  const experienceBullets = parseHtmlBullets(details.experience);
+  const additionalMap = parseAdditionalRequirementsHtml(details.AdditionJobRequirements);
+
+  const requirements = {};
+  if (educationBullets?.length) requirements.education = { bullets: educationBullets };
+  if (experienceBullets?.length) requirements.experience = { bullets: experienceBullets };
+  if (additionalMap) Object.assign(requirements, additionalMap);
+
+  const responsibilities_context = details.JobDescription
+    ? parseResponsibilities(htmlToText(details.JobDescription))
+    : null;
+
+  const skills = splitCommaList(details.SkillsRequired);
+  const suggested = splitCommaList(details.SuggestedSkills);
+  const skills_expertise =
+    skills || suggested
+      ? {
+          skills: skills ?? null,
+          suggested_by_bdjobs: suggested ?? null
+        }
+      : null;
+
+  let benefits = null;
+  if (details.JobOtherBenifits) {
+    benefits =
+      parseHtmlBullets(details.JobOtherBenifits) ??
+      parseLooseLines(htmlToText(details.JobOtherBenifits), { dropHeadings: ["What We Offer"] });
+  }
+
+  const compensationDetails = {};
+  if (details.JobWorkPlace) compensationDetails.workplace = normalizeCommaSpace(details.JobWorkPlace);
+  if (details.JobNature) compensationDetails.employment_status = details.JobNature;
+  if (details.Gender && details.Gender !== "Na") compensationDetails.gender = details.Gender;
+  if (details.JobLocation) compensationDetails.job_location = details.JobLocation;
+
+  const compensation_other_benefits =
+    benefits || Object.keys(compensationDetails).length
+      ? {
+          benefits: benefits ?? null,
+          details: Object.keys(compensationDetails).length ? compensationDetails : null
+        }
+      : null;
+
+  const read_before_apply = details.ApplyInstruction
+    ? normalizeWhitespace(htmlToText(details.ApplyInstruction))
+    : null;
+
+  const companyDetails = {};
+  if (details.CompanyAddress) companyDetails.address = normalizeWhitespace(details.CompanyAddress);
+  if (details.CompanyBusiness) companyDetails.business = normalizeWhitespace(details.CompanyBusiness);
+
+  const summary = {};
+  if (details.JobVacancies) summary.vacancy = String(details.JobVacancies).trim();
+  if (experienceBullets?.length) summary.experience = experienceBullets[0];
+  if (details.Age && details.Age !== "Na") summary.age = String(details.Age).trim();
+  if (details.JobLocation) summary.location = String(details.JobLocation).trim();
+  if (details.JobSalaryRangeText || details.JobSalaryRange) {
+    summary.salary = String(details.JobSalaryRangeText || details.JobSalaryRange).trim();
+  }
+  if (details.PostedOn) summary.published = String(details.PostedOn).trim();
+
+  return {
+    job_id: parsedJobId ?? null,
+    url: url ?? (parsedJobId ? `https://bdjobs.com/jobs/details/${parsedJobId}` : null),
+    saved_at: savedAt,
+    source: "bdjobs",
+    parser_version: PARSER_VERSION,
+    title,
+    company,
+    application_deadline: details.Deadline ?? details.DeadlineDB ?? null,
+    published: details.PostedOn ?? null,
+    summary: Object.keys(summary).length ? summary : null,
+    requirements: Object.keys(requirements).length ? requirements : null,
+    responsibilities_context,
+    skills_expertise,
+    compensation_other_benefits,
+    read_before_apply,
+    company_information: Object.keys(companyDetails).length ? { details: companyDetails } : null,
+    raw_text: null
+  };
+}
+
+function parseFromText({ html, url, savedAt, jobId } = {}) {
   const titleTag = extractTitleTag(html);
   let pageText = htmlToText(html);
   pageText = stripFooter(pageText);
@@ -369,4 +544,36 @@ export function parseBdjobsHtml({ html, url, savedAt = new Date().toISOString(),
     company_information,
     raw_text: pageText
   };
+}
+
+function isEmptyValue(value) {
+  if (value === null || value === undefined) return true;
+  if (typeof value === "string") return value.trim().length === 0;
+  if (Array.isArray(value)) return value.length === 0;
+  if (typeof value === "object") return Object.keys(value).length === 0;
+  return false;
+}
+
+function mergeJobs(primary, fallback) {
+  if (!primary) return fallback;
+  const merged = { ...primary };
+  for (const [key, value] of Object.entries(fallback ?? {})) {
+    if (isEmptyValue(merged[key])) {
+      merged[key] = value;
+    }
+  }
+  return merged;
+}
+
+function parseFromState({ html, url, savedAt, jobId } = {}) {
+  const state = extractNgStateJson(html);
+  const details = extractJobDetailsFromState(state);
+  if (!details) return null;
+  return parseJobDetails(details, { url, savedAt, jobId });
+}
+
+export function parseBdjobsHtml({ html, url, savedAt = new Date().toISOString(), jobId = null } = {}) {
+  const textJob = parseFromText({ html, url, savedAt, jobId });
+  const stateJob = parseFromState({ html, url, savedAt, jobId });
+  return mergeJobs(stateJob, textJob);
 }
