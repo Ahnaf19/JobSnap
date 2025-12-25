@@ -1,7 +1,7 @@
 # JobSnap — save the JD once, stop hunting it later
 
 JobSnap snapshots a BDJobs circular to your disk (raw HTML, structured JSON, and clean Markdown) the moment you apply.  
-The CLI is the v0.1 focus; the extension reuses the same parser.
+The CLI is the v0.2 focus; the extension reuses the same parser.
 
 ## Requirements
 
@@ -25,6 +25,30 @@ Re-parse an existing snapshot (no re-download):
 
 ```bash
 node ./cli/jobsnap.js reparse jobs/1436685
+```
+
+## CLI commands
+
+| Command | Args | Description |
+| --- | --- | --- |
+| `save` | `<bdjobs_url> [--out <dir>] [--skip]` | Download a circular, parse it, and save the snapshot. |
+| `reparse` | `<job_dir \| raw_html>` | Rebuild `job.json`/`job.md` from an existing `raw.html`. |
+| `--help` | `-h` | Show usage and examples. |
+
+Examples:
+
+```bash
+node ./cli/jobsnap.js save "https://bdjobs.com/jobs/details/1436685" --out ./jobs
+node ./cli/jobsnap.js save "https://bdjobs.com/jobs/details/1436685" --skip
+node ./cli/jobsnap.js reparse jobs/1436685/raw.html
+```
+
+## Help
+
+```bash
+node ./cli/jobsnap.js --help
+# or
+npm run jobsnap -- --help
 ```
 
 ## Output (default)
@@ -71,10 +95,10 @@ node ./cli/jobsnap.js save "https://bdjobs.com/jobs/details/1436685" --skip
 npm test
 ```
 
-## Extension (skeleton)
+## Extension
 
-The `extension/` folder contains a minimal MV3 extension that downloads a Markdown file
-from the current BDJobs job page using the same core parser.
+The `extension/` folder contains a MV3 extension that downloads a Markdown file
+from the current BDJobs job page or a pasted URL using the same core parser.
 
 To load it in Chrome:
 
@@ -91,4 +115,9 @@ npm run sync-extension
 To use:
 
 1. Open a BDJobs job circular link.
-2. Click the JobSnap extension and choose `Download Markdown`.
+2. Click the JobSnap extension and choose `Download from current tab`.
+
+Or:
+
+1. Paste a BDJobs job details link into the popup.
+2. Click `Download from URL`.
