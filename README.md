@@ -3,7 +3,7 @@
   <h1>JobSnap</h1>
   <p>Save the JD once, stop hunting it later.</p>
   <p>
-    <img src="https://img.shields.io/badge/version-v0.2.0-ff6a3d" alt="Version v0.2.0" />
+    <img src="https://img.shields.io/badge/version-v0.3.0-ff6a3d" alt="Version v0.3.0" />
     <img src="https://img.shields.io/badge/node-18%2B-3c873a?logo=node.js&logoColor=white" alt="Node 18+" />
     <img src="https://img.shields.io/badge/javascript-ES2022-f7df1e?logo=javascript&logoColor=000" alt="JavaScript ES2022" />
     <img src="https://img.shields.io/badge/extension-Chrome_MV3-4285f4?logo=googlechrome&logoColor=white" alt="Chrome MV3" />
@@ -11,7 +11,7 @@
 </div>
 
 JobSnap snapshots a BDJobs circular to your disk (raw HTML, structured JSON, and clean Markdown) the moment you apply.  
-The CLI is the v0.2 focus; the extension reuses the same parser.
+The CLI is the v0.3 focus; the extension reuses the same parser.
 
 ## Requirements
 
@@ -41,7 +41,7 @@ node ./cli/jobsnap.js reparse jobs/1436685
 
 | Command | Args | Description |
 | --- | --- | --- |
-| `save` | `<bdjobs_url> [--out <dir>] [--skip]` | Download a circular, parse it, and save the snapshot. |
+| `save` | `<bdjobs_url> [--out <dir>] [--skip] [--template <pattern>]` | Download a circular, parse it, and save the snapshot. |
 | `reparse` | `<job_dir \| raw_html>` | Rebuild `job.json`/`job.md` from an existing `raw.html`. |
 | `--help` | `-h` | Show usage and examples. |
 
@@ -49,6 +49,7 @@ node ./cli/jobsnap.js reparse jobs/1436685
 
 - `--out <dir>`: output root folder (defaults to `jobs/`)
 - `--skip`: do not overwrite if the job already exists
+- `--template <pattern>`: filename template, e.g. `{title}_{company}_{job_id}.md`
 - `--help` / `-h`: show usage + examples
 
 Examples (covering every arg):
@@ -57,6 +58,7 @@ Examples (covering every arg):
 node ./cli/jobsnap.js save "https://bdjobs.com/jobs/details/1436685"
 node ./cli/jobsnap.js save "https://bdjobs.com/jobs/details/1436685" --out ./jobs
 node ./cli/jobsnap.js save "https://bdjobs.com/jobs/details/1436685" --skip
+node ./cli/jobsnap.js save "https://bdjobs.com/jobs/details/1436685" --template "{title}_{company}_{job_id}.md"
 node ./cli/jobsnap.js reparse jobs/1436685
 node ./cli/jobsnap.js reparse jobs/1436685/raw.html
 ```
@@ -68,6 +70,14 @@ node ./cli/jobsnap.js --help
 # or
 npm run jobsnap -- --help
 ```
+
+## Error codes
+
+- `2`: invalid arguments / missing inputs
+- `3`: invalid `jobsnap.config.json`
+- `4`: fetch failed
+- `5`: parse failed
+- `6`: write failed
 
 ## Output (default)
 
@@ -82,7 +92,19 @@ jobs/
 
 ## Config
 
-You can set an output directory in a local `.env` file:
+You can set defaults in a local `jobsnap.config.json`:
+
+```json
+{
+  "outputDir": "jobs",
+  "skip": false,
+  "template": "{title}_{company}_{job_id}.md"
+}
+```
+
+Precedence: CLI flags > `jobsnap.config.json` > `.env` > default.
+
+You can also set an output directory in a local `.env` file:
 
 ```
 OUTPUT_DIR=jobs
@@ -139,3 +161,8 @@ Or:
 
 1. Paste a BDJobs job details link into the popup.
 2. Click `Download from URL`.
+
+Filename template:
+
+1. Set a template (e.g. `{title}_{company}_{job_id}.md`) in the popup.
+2. JobSnap remembers it via extension storage.
