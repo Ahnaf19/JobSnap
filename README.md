@@ -52,9 +52,15 @@ Or override per run:
 node ./cli/jobsnap.js save "https://bdjobs.com/jobs/details/1436685" --out ./jobs
 ```
 
+Skip if already downloaded:
+
+```bash
+node ./cli/jobsnap.js save "https://bdjobs.com/jobs/details/1436685" --skip
+```
+
 ## Notes
 
-- The CLI overwrites existing files for the same job ID.
+- The CLI overwrites existing files for the same job ID (unless `--skip` is used).
 - `job.md` is the primary artifact (LLM-friendly, stable headings).
 - `raw.html` lets you re-parse later if the page format changes.
 - `index.jsonl` is a lightweight catalog of saved jobs.

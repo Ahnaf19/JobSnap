@@ -72,6 +72,16 @@ function removeCalloutLines(text) {
   return filtered.join("\n").trim();
 }
 
+const SUMMARY_PLACEHOLDERS = new Set(["--", "-", "n/a", "na", "not applicable", "not specified"]);
+
+function normalizeSummaryValue(value) {
+  if (value === null || value === undefined) return null;
+  const cleaned = normalizeWhitespace(String(value));
+  if (!cleaned) return null;
+  if (SUMMARY_PLACEHOLDERS.has(cleaned.toLowerCase())) return null;
+  return cleaned;
+}
+
 function cleanSummaryValues(summary) {
   const cleaned = {};
   for (const [key, value] of Object.entries(summary)) {
@@ -79,8 +89,9 @@ function cleanSummaryValues(summary) {
       .split("\n")
       .map((line) => line.trim())
       .filter(Boolean)[0];
-    if (!firstLine) continue;
-    cleaned[key] = firstLine;
+    const normalized = normalizeSummaryValue(firstLine);
+    if (!normalized) continue;
+    cleaned[key] = normalized;
   }
   return cleaned;
 }
@@ -458,14 +469,16 @@ function parseJobDetails(details, { url, savedAt, jobId } = {}) {
   if (details.CompanyBusiness) companyDetails.business = normalizeWhitespace(details.CompanyBusiness);
 
   const summary = {};
-  if (details.JobVacancies) summary.vacancy = String(details.JobVacancies).trim();
-  if (experienceBullets?.length) summary.experience = experienceBullets[0];
-  if (details.Age && details.Age !== "Na") summary.age = String(details.Age).trim();
-  if (details.JobLocation) summary.location = String(details.JobLocation).trim();
-  if (details.JobSalaryRangeText || details.JobSalaryRange) {
-    summary.salary = String(details.JobSalaryRangeText || details.JobSalaryRange).trim();
-  }
-  if (details.PostedOn) summary.published = String(details.PostedOn).trim();
+  const addSummary = (key, value) => {
+    const normalized = normalizeSummaryValue(value);
+    if (normalized) summary[key] = normalized;
+  };
+  addSummary("vacancy", details.JobVacancies);
+  if (experienceBullets?.length) addSummary("experience", experienceBullets[0]);
+  addSummary("age", details.Age);
+  addSummary("location", details.JobLocation);
+  addSummary("salary", details.JobSalaryRangeText || details.JobSalaryRange);
+  addSummary("published", details.PostedOn);
 
   return {
     job_id: parsedJobId ?? null,

@@ -12,12 +12,13 @@ function printHelp() {
 JobSnap (v0.1)
 
 Usage:
-  jobsnap save <bdjobs_url> [--out <dir>]
+  jobsnap save <bdjobs_url> [--out <dir>] [--skip]
   jobsnap reparse <job_dir|raw_html>
 
 Examples:
   jobsnap save "https://bdjobs.com/jobs/details/1436685"
   jobsnap save "https://bdjobs.com/jobs/details/1436685" --out ./jobs
+  jobsnap save "https://bdjobs.com/jobs/details/1436685" --skip
   jobsnap reparse jobs/1436685
   jobsnap reparse jobs/1436685/raw.html
 
@@ -39,6 +40,10 @@ function parseArgs(argv) {
     }
     if (token === "--out") {
       result.out = args.shift();
+      continue;
+    }
+    if (token === "--skip" || token === "--skip-existing") {
+      result.skip = true;
       continue;
     }
     result._.push(token);
@@ -73,9 +78,9 @@ export async function runCli(argv, { projectRoot = process.cwd() } = {}) {
       const env = await loadDotEnv(path.join(projectRoot, ".env"));
       const outputRoot = path.resolve(projectRoot, parsed.out ?? env.OUTPUT_DIR ?? DEFAULT_OUTPUT_DIR);
 
-      const result = await saveJobSnapshot({ url, outputRoot });
+      const result = await saveJobSnapshot({ url, outputRoot, skipExisting: parsed.skip });
       // eslint-disable-next-line no-console
-      console.log(`Saved: ${path.relative(process.cwd(), result.jobDir)}`);
+      console.log(`${result.skipped ? "Skipped" : "Saved"}: ${path.relative(process.cwd(), result.jobDir)}`);
       // eslint-disable-next-line no-console
       console.log(`Markdown: ${path.relative(process.cwd(), result.mdPath)}`);
       // eslint-disable-next-line no-console
