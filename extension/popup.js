@@ -20,6 +20,15 @@ async function injectContentScript(tabId) {
   }
 }
 
+async function pingContentScript(tabId) {
+  try {
+    const response = await chrome.tabs.sendMessage(tabId, { type: "JOBSNAP_PING" });
+    return Boolean(response?.ok);
+  } catch (err) {
+    return false;
+  }
+}
+
 function downloadMarkdown({ filename, markdown }) {
   const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -44,10 +53,13 @@ document.getElementById("download")?.addEventListener("click", async () => {
     return;
   }
 
-  const injected = await injectContentScript(tab.id);
-  if (!injected) {
-    setStatus("Could not inject content script. Make sure this is a BDJobs job page.");
-    return;
+  const ready = await pingContentScript(tab.id);
+  if (!ready) {
+    const injected = await injectContentScript(tab.id);
+    if (!injected) {
+      setStatus("Could not inject content script. Make sure this is a BDJobs job page.");
+      return;
+    }
   }
 
   try {
