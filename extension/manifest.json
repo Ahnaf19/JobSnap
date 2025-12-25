@@ -14,5 +14,11 @@
       "matches": ["https://bdjobs.com/jobs/details/*"],
       "js": ["content.js"]
     }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["core/*.js"],
+      "matches": ["https://bdjobs.com/*", "https://*.bdjobs.com/*"]
+    }
   ]
 }

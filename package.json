@@ -9,10 +9,11 @@
   },
   "scripts": {
     "jobsnap": "node ./cli/jobsnap.js",
-    "smoke": "node ./cli/jobsnap.js --help"
+    "smoke": "node ./cli/jobsnap.js --help",
+    "sync-extension": "node ./scripts/sync-extension-core.js",
+    "test": "node --test"
   },
   "engines": {
     "node": ">=18"
   }
 }
-
