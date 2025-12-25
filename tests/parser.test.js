@@ -63,3 +63,17 @@ test("parses job details from ng-state JSON (fixture 2)", async () => {
   assert.equal(job.compensation_other_benefits.details.employment_status, "Part Time");
   assert.equal(job.compensation_other_benefits.details.gender, "Only Male");
 });
+
+test("cleans placeholder summary values and punctuation (fixture 3)", async () => {
+  const html = await loadFixture("job_details_3.html");
+  const job = parseBdjobsHtml({
+    html,
+    url: "https://bdjobs.com/jobs/details/789",
+    jobId: "789",
+    savedAt: "test"
+  });
+
+  assert.equal(job.summary.vacancy, undefined);
+  assert.equal(job.company_information.details.address, "House No. 31, Road 20, Dhaka");
+  assert.ok(job.responsibilities_context.sections["About Us"].text.includes("discipline. We ship."));
+});
