@@ -1,2 +1,1 @@
-export const PARSER_VERSION = "0.1.0";
-
+export const PARSER_VERSION = "0.2.0";

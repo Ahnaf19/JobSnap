@@ -9,7 +9,7 @@ const DEFAULT_OUTPUT_DIR = "jobs";
 function printHelp() {
   // eslint-disable-next-line no-console
   console.log(`
-JobSnap (v0.1)
+JobSnap (v0.2)
 
 Usage:
   jobsnap save <bdjobs_url> [--out <dir>] [--skip]

@@ -45,11 +45,19 @@ node ./cli/jobsnap.js reparse jobs/1436685
 | `reparse` | `<job_dir \| raw_html>` | Rebuild `job.json`/`job.md` from an existing `raw.html`. |
 | `--help` | `-h` | Show usage and examples. |
 
-Examples:
+## CLI arguments
+
+- `--out <dir>`: output root folder (defaults to `jobs/`)
+- `--skip`: do not overwrite if the job already exists
+- `--help` / `-h`: show usage + examples
+
+Examples (covering every arg):
 
 ```bash
+node ./cli/jobsnap.js save "https://bdjobs.com/jobs/details/1436685"
 node ./cli/jobsnap.js save "https://bdjobs.com/jobs/details/1436685" --out ./jobs
 node ./cli/jobsnap.js save "https://bdjobs.com/jobs/details/1436685" --skip
+node ./cli/jobsnap.js reparse jobs/1436685
 node ./cli/jobsnap.js reparse jobs/1436685/raw.html
 ```
 
