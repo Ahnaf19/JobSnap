@@ -6,28 +6,116 @@
     <title>JobSnap</title>
     <style>
       body {
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-        margin: 12px;
-        width: 260px;
+        font-family: "Avenir Next", Avenir, Futura, "Trebuchet MS", sans-serif;
+        margin: 0;
+        padding: 12px;
+        width: 320px;
+        background: radial-gradient(circle at top, #fff2e6, #f4ede6 60%, #efe5db 100%);
+        color: #251d17;
       }
-      button {
+      .panel {
+        background: #ffffff;
+        border-radius: 14px;
+        padding: 14px;
+        box-shadow: 0 10px 20px rgba(31, 20, 10, 0.12);
+      }
+      .title {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 2px;
+      }
+      .subtitle {
+        font-size: 12px;
+        color: #6a5a50;
+        margin-bottom: 12px;
+      }
+      .btn {
         width: 100%;
-        padding: 10px 12px;
+        padding: 11px 12px;
         font-size: 14px;
+        font-weight: 600;
+        border-radius: 10px;
+        border: none;
         cursor: pointer;
+        transition: transform 0.08s ease, box-shadow 0.2s ease, filter 0.2s ease;
+      }
+      .btn:active {
+        transform: translateY(1px);
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #ff8a3d, #ff4d1a);
+        color: #fff;
+        box-shadow: 0 10px 18px rgba(255, 90, 40, 0.35);
+      }
+      .btn-primary:hover {
+        filter: brightness(1.03);
+      }
+      .btn-secondary {
+        background: #f5efe8;
+        color: #2b231f;
+        border: 1px solid #e0d6cc;
+        box-shadow: 0 6px 12px rgba(60, 40, 20, 0.08);
+      }
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+      .divider {
+        text-align: center;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: #9a8679;
+        margin: 10px 0;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+      .field label {
+        font-size: 11px;
+        color: #6a5a50;
+      }
+      .field input {
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid #d8cfc7;
+        font-size: 12px;
+        outline: none;
+      }
+      .field input:focus {
+        border-color: #ff8a3d;
+        box-shadow: 0 0 0 2px rgba(255, 138, 61, 0.2);
       }
       #status {
         margin-top: 10px;
         font-size: 12px;
-        color: #444;
+        color: #4c4036;
         white-space: pre-wrap;
       }
     </style>
   </head>
   <body>
-    <button id="download">Download Markdown</button>
-    <div id="status"></div>
+    <div class="panel">
+      <div class="title">JobSnap</div>
+      <div class="subtitle">Save a BDJobs JD in one click.</div>
+      <button id="download-tab" class="btn btn-primary">Download from current tab</button>
+      <div class="divider">or</div>
+      <div class="field">
+        <label for="url-input">Paste BDJobs link</label>
+        <input
+          id="url-input"
+          type="text"
+          placeholder="https://bdjobs.com/jobs/details/1436685"
+          autocomplete="off"
+        />
+      </div>
+      <button id="download-url" class="btn btn-secondary">Download from URL</button>
+      <div id="status"></div>
+    </div>
     <script src="popup.js"></script>
   </body>
 </html>
-
