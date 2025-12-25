@@ -1,7 +1,9 @@
 const statusEl = document.getElementById("status");
 const urlInput = document.getElementById("url-input");
+const templateInput = document.getElementById("template-input");
 const downloadTabBtn = document.getElementById("download-tab");
 const downloadUrlBtn = document.getElementById("download-url");
+const DEFAULT_TEMPLATE = "{title}_{company}_{job_id}.md";
 
 function setStatus(text) {
   if (statusEl) statusEl.textContent = text;
@@ -11,6 +13,7 @@ function setBusy(isBusy) {
   if (downloadTabBtn) downloadTabBtn.disabled = isBusy;
   if (downloadUrlBtn) downloadUrlBtn.disabled = isBusy;
   if (urlInput) urlInput.disabled = isBusy;
+  if (templateInput) templateInput.disabled = isBusy;
 }
 
 async function getActiveTab() {
@@ -45,17 +48,17 @@ async function loadCore() {
     corePromise = Promise.all([
       import(chrome.runtime.getURL("core/parseBdjobsHtml.js")),
       import(chrome.runtime.getURL("core/renderJobMd.js")),
-      import(chrome.runtime.getURL("core/strings.js")),
-      import(chrome.runtime.getURL("core/extractJobId.js"))
+      import(chrome.runtime.getURL("core/extractJobId.js")),
+      import(chrome.runtime.getURL("core/filename.js"))
     ]);
   }
   const [
     { parseBdjobsHtml },
     { renderJobMd },
-    { sanitizeFilenameSegment },
-    { extractJobId }
+    { extractJobId },
+    { buildFilename }
   ] = await corePromise;
-  return { parseBdjobsHtml, renderJobMd, sanitizeFilenameSegment, extractJobId };
+  return { parseBdjobsHtml, renderJobMd, extractJobId, buildFilename };
 }
 
 function downloadMarkdown({ filename, markdown }) {
@@ -90,7 +93,11 @@ async function handleCurrentTab() {
       }
     }
 
-    const response = await chrome.tabs.sendMessage(tab.id, { type: "JOBSNAP_EXTRACT_MD" });
+    const template = String(templateInput?.value || "").trim() || DEFAULT_TEMPLATE;
+    const response = await chrome.tabs.sendMessage(tab.id, {
+      type: "JOBSNAP_EXTRACT_MD",
+      template
+    });
     if (!response?.markdown) {
       setStatus(response?.error || "Could not extract content on this page.");
       return;
@@ -114,7 +121,7 @@ async function handleUrlDownload() {
   setStatus("Fetching...");
   setBusy(true);
   try {
-    const { parseBdjobsHtml, renderJobMd, sanitizeFilenameSegment, extractJobId } = await loadCore();
+    const { parseBdjobsHtml, renderJobMd, extractJobId, buildFilename } = await loadCore();
     const jobId = extractJobId(inputValue);
     if (!jobId) {
       setStatus("Not a supported BDJobs job details URL.");
@@ -131,9 +138,13 @@ async function handleUrlDownload() {
     const savedAt = new Date().toISOString();
     const job = parseBdjobsHtml({ html, url: inputValue, jobId, savedAt });
     const markdown = renderJobMd(job);
-    const safeTitle = sanitizeFilenameSegment(job.title || "job");
-    const safeCompany = sanitizeFilenameSegment(job.company || "unknown");
-    const filename = `${safeTitle}_${safeCompany}_${jobId}.md`;
+    const template = String(templateInput?.value || "").trim() || DEFAULT_TEMPLATE;
+    const filename = buildFilename({
+      template,
+      title: job.title,
+      company: job.company,
+      jobId: job.job_id ?? jobId
+    });
     downloadMarkdown({ filename, markdown });
     setStatus(`Downloaded:\n${filename}`);
   } catch (err) {
@@ -145,3 +156,24 @@ async function handleUrlDownload() {
 
 downloadTabBtn?.addEventListener("click", handleCurrentTab);
 downloadUrlBtn?.addEventListener("click", handleUrlDownload);
+
+async function loadStoredTemplate() {
+  if (!templateInput) return;
+  try {
+    const stored = await chrome.storage.sync.get({ filenameTemplate: DEFAULT_TEMPLATE });
+    templateInput.value = stored.filenameTemplate || DEFAULT_TEMPLATE;
+  } catch {
+    templateInput.value = DEFAULT_TEMPLATE;
+  }
+}
+
+templateInput?.addEventListener("change", async () => {
+  const value = String(templateInput.value || "").trim();
+  try {
+    await chrome.storage.sync.set({ filenameTemplate: value || DEFAULT_TEMPLATE });
+  } catch {
+    // ignore storage errors
+  }
+});
+
+loadStoredTemplate();
