@@ -139,6 +139,27 @@ jobs/
     job.md
 ```
 
+## Output contract (v1.0 target)
+
+`job.json` fields (stable):
+
+- `job_id`, `url`, `saved_at`, `source`, `parser_version`
+- `title`, `company`, `application_deadline`, `published`
+- `summary`, `requirements`, `responsibilities_context`
+- `skills_expertise`, `compensation_other_benefits`
+- `read_before_apply`, `company_information`
+
+`job.md` top-level headings (stable):
+
+- Summary
+- Requirements
+- Responsibilities & Context
+- Skills & Expertise
+- Compensation & Other Benefits
+- Read Before Apply
+- Company Information
+- Raw Text (fallback only)
+
 ## Config
 
 You can set defaults in a local `jobsnap.config.json`:
