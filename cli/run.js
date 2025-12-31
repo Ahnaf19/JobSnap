@@ -45,11 +45,21 @@ function parseArgs(argv) {
       continue;
     }
     if (token === "--out") {
-      result.out = args.shift();
+      const value = args.shift();
+      if (!value || value.startsWith("-")) {
+        result.error = "Missing value for --out.";
+        break;
+      }
+      result.out = value;
       continue;
     }
     if (token === "--template" || token === "--name") {
-      result.template = args.shift();
+      const value = args.shift();
+      if (!value || value.startsWith("-")) {
+        result.error = "Missing value for --template.";
+        break;
+      }
+      result.template = value;
       continue;
     }
     if (token === "--skip" || token === "--skip-existing") {
@@ -68,6 +78,12 @@ function parseArgs(argv) {
 
 export async function runCli(argv, { projectRoot = process.cwd() } = {}) {
   const parsed = parseArgs(argv);
+  if (parsed.error) {
+    // eslint-disable-next-line no-console
+    console.error(parsed.error);
+    printHelp();
+    return ExitCode.INVALID_ARGS;
+  }
   if (parsed.help) {
     printHelp();
     return ExitCode.OK;
@@ -143,7 +159,7 @@ export async function runCli(argv, { projectRoot = process.cwd() } = {}) {
     }
 
     // eslint-disable-next-line no-console
-    console.error(`Unknown command: ${command}`);
+    console.error(`Unknown command: ${command}. Use --help for usage.`);
     printHelp();
     return ExitCode.INVALID_ARGS;
   } catch (err) {

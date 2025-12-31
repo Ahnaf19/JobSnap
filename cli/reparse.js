@@ -39,6 +39,14 @@ async function resolveRawHtmlPath(targetPath) {
 
 export async function reparseJobSnapshot({ targetPath, filenameTemplate = null, dryRun = false }) {
   const { jobDir, rawHtmlPath } = await resolveRawHtmlPath(targetPath);
+  try {
+    await fs.stat(rawHtmlPath);
+  } catch {
+    throw new CliError(
+      `raw.html not found in ${jobDir}. Run save first or pass a raw.html path.`,
+      ExitCode.INVALID_ARGS
+    );
+  }
 
   const html = await fs.readFile(rawHtmlPath, "utf8");
   const savedAt = new Date().toISOString();
@@ -52,7 +60,10 @@ export async function reparseJobSnapshot({ targetPath, filenameTemplate = null, 
 
   const job = parseBdjobsHtml({ html, url, jobId, savedAt });
   if (!job) {
-    throw new CliError("Parse failed: no job data extracted.", ExitCode.PARSE_FAILED);
+    throw new CliError(
+      "Parse failed: no job data extracted. The HTML may be incomplete or invalid.",
+      ExitCode.PARSE_FAILED
+    );
   }
   const markdown = renderJobMd(job);
   const mdFilename = buildFilename({

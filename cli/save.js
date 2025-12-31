@@ -66,7 +66,10 @@ export async function saveJobSnapshot({
   const savedAt = new Date().toISOString();
   const job = parseBdjobsHtml({ html, url, savedAt, jobId });
   if (!job) {
-    throw new CliError("Parse failed: no job data extracted.", ExitCode.PARSE_FAILED);
+    throw new CliError(
+      "Parse failed: no job data extracted. The page may not be a job details page.",
+      ExitCode.PARSE_FAILED
+    );
   }
   const markdown = renderJobMd(job);
   const mdFilename = buildFilename({
