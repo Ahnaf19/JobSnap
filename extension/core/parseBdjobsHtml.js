@@ -145,14 +145,21 @@ function buildSectionSlices(text) {
   const order = [
     { key: "summary", headings: ["Summary"] },
     { key: "requirements", headings: ["Requirements"] },
-    { key: "responsibilities_context", headings: ["Responsibilities & Context", "Responsibilities"] },
+    {
+      key: "responsibilities_context",
+      headings: ["Responsibilities & Context", "Responsibilities and Context", "Responsibilities"]
+    },
     { key: "skills_expertise", headings: ["Skills & Expertise"] },
-    { key: "compensation_other_benefits", headings: ["Compensation & Other Benefits", "Salary & Benefits"] },
+    {
+      key: "compensation_other_benefits",
+      headings: ["Compensation & Other Benefits", "Compensation and Other Benefits", "Salary & Benefits"]
+    },
     { key: "read_before_apply", headings: ["Read Before Apply"] },
     { key: "company_information", headings: ["Company Information"] }
   ];
 
   const found = [];
+  const seen = new Set();
   let cursor = 0;
   for (const entry of order) {
     let best = null;
@@ -163,10 +170,25 @@ function buildSectionSlices(text) {
     }
     if (!best) continue;
     found.push({ ...best, key: entry.key });
+    seen.add(entry.key);
     cursor = best.index + 1;
   }
 
+  for (const entry of order) {
+    if (seen.has(entry.key)) continue;
+    let best = null;
+    for (const heading of entry.headings) {
+      const match = sliceSection(text, heading, { startIndex: 0 });
+      if (!match) continue;
+      if (!best || match.index < best.index) best = match;
+    }
+    if (!best) continue;
+    found.push({ ...best, key: entry.key });
+    seen.add(entry.key);
+  }
+
   // Convert heading start indices into section ranges.
+  found.sort((a, b) => a.index - b.index);
   const ranges = [];
   for (let i = 0; i < found.length; i += 1) {
     const start = found[i].index;
@@ -233,8 +255,37 @@ function stripAnyHeading(chunk, headings) {
   return String(chunk ?? "").trim();
 }
 
+function expandInlineHeadingLines(text, headings) {
+  const lines = String(text ?? "").split("\n");
+  const output = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (trimmed.startsWith("- ")) {
+      output.push(trimmed);
+      continue;
+    }
+
+    let matched = false;
+    for (const heading of headings) {
+      const pattern = new RegExp(`^${escapeRegex(heading)}\\s*:\\s*(.+)$`, "i");
+      const match = trimmed.match(pattern);
+      if (!match) continue;
+      output.push(heading);
+      const remainder = match[1].trim();
+      if (remainder) output.push(remainder);
+      matched = true;
+      break;
+    }
+
+    if (!matched) output.push(trimmed);
+  }
+
+  return output.join("\n");
+}
+
 function extractSubsectionBlocks(text, headings) {
-  const cleaned = normalizeWhitespace(text);
+  const cleaned = expandInlineHeadingLines(normalizeWhitespace(text), headings);
   const positions = [];
   for (const heading of headings) {
     const match = sliceSection(cleaned, heading, { startIndex: 0 });
@@ -265,7 +316,8 @@ function extractSubsectionBlocks(text, headings) {
 }
 
 function extractSubsectionMap(text, items) {
-  const cleaned = normalizeWhitespace(text);
+  const headings = items.map((item) => item.title);
+  const cleaned = expandInlineHeadingLines(normalizeWhitespace(text), headings);
   const positions = [];
   for (const item of items) {
     const match = sliceSection(cleaned, item.title, { startIndex: 0 });
@@ -295,17 +347,31 @@ function extractSubsectionMap(text, items) {
 }
 
 function parseRequirements(sectionText) {
-  return extractSubsectionMap(sectionText, [
+  const sections = extractSubsectionMap(sectionText, [
     { key: "education", title: "Education" },
     { key: "experience", title: "Experience" },
     { key: "additional_requirements", title: "Additional Requirements" },
     { key: "required_skills", title: "Required Skills" },
     { key: "preferred_qualifications", title: "Preferred Qualifications" }
   ]);
+  if (sections) return sections;
+
+  const cleaned = stripAnyHeading(sectionText, ["Requirements"]);
+  const bullets = parseBullets(cleaned);
+  if (bullets.length) return { additional_requirements: { bullets } };
+
+  const lines = parseLooseLines(cleaned, { dropHeadings: ["Requirements"] });
+  if (lines?.length) return { additional_requirements: { bullets: lines } };
+  return null;
 }
 
 function parseResponsibilities(sectionText) {
-  const blocks = extractSubsectionBlocks(sectionText, [
+  const cleaned = stripAnyHeading(sectionText, [
+    "Responsibilities & Context",
+    "Responsibilities and Context",
+    "Responsibilities"
+  ]);
+  const blocks = extractSubsectionBlocks(cleaned, [
     "About Us",
     "The Role",
     "Key Responsibilities",
@@ -314,8 +380,13 @@ function parseResponsibilities(sectionText) {
   ]);
 
   if (!blocks.length) {
-    const cleaned = normalizeWhitespace(sectionText);
-    return cleaned ? { raw_text: cleaned } : null;
+    const normalized = normalizeWhitespace(cleaned);
+    if (!normalized) return null;
+    const bullets = parseBullets(normalized);
+    if (bullets.length) {
+      return { sections: { Responsibilities: { bullets } } };
+    }
+    return { raw_text: normalized };
   }
 
   const sections = {};

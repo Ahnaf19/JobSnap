@@ -77,3 +77,32 @@ test("cleans placeholder summary values and punctuation (fixture 3)", async () =
   assert.equal(job.company_information.details.address, "House No. 31, Road 20, Dhaka");
   assert.ok(job.responsibilities_context.sections["About Us"].text.includes("discipline. We ship."));
 });
+
+test("parses fallback text with inline headings and out-of-order sections", async () => {
+  const html = await loadFixture("job_details_text_1.html");
+  const job = parseBdjobsHtml({
+    html,
+    url: "https://bdjobs.com/jobs/details/999",
+    jobId: "999",
+    savedAt: "test"
+  });
+
+  assert.equal(job.title, "Junior Engineer");
+  assert.equal(job.company, "Example Co");
+  assert.equal(job.summary.salary, "Negotiable");
+  assert.equal(job.company_information.details.address, "10 Example Road, Dhaka");
+  assert.deepEqual(job.requirements.additional_requirements.bullets, ["BSc in CSE", "2 years experience"]);
+  assert.ok(job.responsibilities_context.sections["Key Responsibilities"].bullets.includes("Ship features"));
+});
+
+test("labels bullet-only responsibilities as Responsibilities", async () => {
+  const html = await loadFixture("job_details_text_2.html");
+  const job = parseBdjobsHtml({
+    html,
+    url: "https://bdjobs.com/jobs/details/1000",
+    jobId: "1000",
+    savedAt: "test"
+  });
+
+  assert.ok(job.responsibilities_context.sections.Responsibilities.bullets.includes("Maintain dashboards"));
+});
