@@ -10,6 +10,8 @@
   </p>
 </div>
 
+![JobSnap demo](assets/jobsnap-demo.gif)
+
 JobSnap snapshots a BDJobs circular to your disk (raw HTML, structured JSON, and clean Markdown) the moment you apply.  
 The CLI is the v0.3 focus; the extension reuses the same parser.
 
@@ -99,6 +101,14 @@ You can set defaults in a local `jobsnap.config.json`:
   "outputDir": "jobs",
   "skip": false,
   "template": "{title}_{company}_{job_id}.md"
+}
+```
+
+Minimal example:
+
+```json
+{
+  "outputDir": "jobs"
 }
 ```
 
