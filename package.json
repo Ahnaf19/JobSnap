@@ -1,6 +1,6 @@
 {
   "name": "jobsnap",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Save BDJobs job circulars as clean, LLM-friendly Markdown",
   "type": "module",
   "private": false,
