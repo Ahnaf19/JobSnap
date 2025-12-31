@@ -37,7 +37,7 @@ async function resolveRawHtmlPath(targetPath) {
   };
 }
 
-export async function reparseJobSnapshot({ targetPath, filenameTemplate = null }) {
+export async function reparseJobSnapshot({ targetPath, filenameTemplate = null, dryRun = false }) {
   const { jobDir, rawHtmlPath } = await resolveRawHtmlPath(targetPath);
 
   const html = await fs.readFile(rawHtmlPath, "utf8");
@@ -63,6 +63,11 @@ export async function reparseJobSnapshot({ targetPath, filenameTemplate = null }
   });
 
   const outputRoot = path.dirname(jobDir);
+  const plannedMdPath = path.join(jobDir, mdFilename);
+  const plannedIndexPath = path.join(outputRoot, "index.jsonl");
+  if (dryRun) {
+    return { jobDir, mdPath: plannedMdPath, indexPath: plannedIndexPath, dryRun: true };
+  }
   const { mdPath, indexPath } = await persistSnapshot({
     job,
     html,
@@ -73,5 +78,5 @@ export async function reparseJobSnapshot({ targetPath, filenameTemplate = null }
     mdFilename
   });
 
-  return { jobDir, mdPath, indexPath };
+  return { jobDir, mdPath, indexPath, dryRun: false };
 }

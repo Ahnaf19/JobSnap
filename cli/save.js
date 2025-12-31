@@ -27,7 +27,13 @@ async function readJson(filePath) {
   }
 }
 
-export async function saveJobSnapshot({ url, outputRoot, skipExisting = false, filenameTemplate = null }) {
+export async function saveJobSnapshot({
+  url,
+  outputRoot,
+  skipExisting = false,
+  filenameTemplate = null,
+  dryRun = false
+}) {
   const jobId = extractJobId(url);
   if (!jobId) {
     throw new CliError(
@@ -51,7 +57,8 @@ export async function saveJobSnapshot({ url, outputRoot, skipExisting = false, f
       jobDir,
       mdPath: path.join(jobDir, mdFilename),
       indexPath: path.join(outputRoot, "index.jsonl"),
-      skipped: true
+      skipped: true,
+      dryRun
     };
   }
 
@@ -69,6 +76,19 @@ export async function saveJobSnapshot({ url, outputRoot, skipExisting = false, f
     jobId: job.job_id ?? jobId
   });
 
+  const plannedMdPath = path.join(jobDir, mdFilename);
+  const plannedIndexPath = path.join(outputRoot, "index.jsonl");
+  if (dryRun) {
+    return {
+      jobId,
+      jobDir,
+      mdPath: plannedMdPath,
+      indexPath: plannedIndexPath,
+      skipped: false,
+      dryRun: true
+    };
+  }
+
   const { mdPath, indexPath } = await persistSnapshot({
     job,
     html,
@@ -79,5 +99,5 @@ export async function saveJobSnapshot({ url, outputRoot, skipExisting = false, f
     mdFilename
   });
 
-  return { jobId, jobDir, mdPath, indexPath, skipped: false };
+  return { jobId, jobDir, mdPath, indexPath, skipped: false, dryRun: false };
 }

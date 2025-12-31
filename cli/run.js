@@ -11,23 +11,25 @@ const DEFAULT_OUTPUT_DIR = "jobs";
 function printHelp() {
   // eslint-disable-next-line no-console
   console.log(`
-JobSnap (v0.3)
+JobSnap CLI
 
 Usage:
-  jobsnap save <bdjobs_url> [--out <dir>] [--skip] [--template <pattern>]
-  jobsnap reparse <job_dir|raw_html> [--template <pattern>]
+  jobsnap save <bdjobs_url> [--out <dir>] [--skip] [--template <pattern>] [--dry-run]
+  jobsnap reparse <job_dir|raw_html> [--template <pattern>] [--dry-run]
 
 Examples:
   jobsnap save "https://bdjobs.com/jobs/details/1436685"
   jobsnap save "https://bdjobs.com/jobs/details/1436685" --out ./jobs
   jobsnap save "https://bdjobs.com/jobs/details/1436685" --skip
   jobsnap save "https://bdjobs.com/jobs/details/1436685" --template "{title}_{company}_{job_id}.md"
+  jobsnap save "https://bdjobs.com/jobs/details/1436685" --dry-run
   jobsnap reparse jobs/1436685 --template "{title}_{company}_{job_id}.md"
   jobsnap reparse jobs/1436685/raw.html
+  jobsnap reparse jobs/1436685 --dry-run
 
 Config:
   - Optional .env at repo root with OUTPUT_DIR=...
-  - Optional jobsnap.config.json with outputDir, skip, template
+  - Optional jobsnap.config.json with outputDir, skip, template, dryRun
 `);
 }
 
@@ -54,6 +56,10 @@ function parseArgs(argv) {
       result.skip = true;
       continue;
     }
+    if (token === "--dry-run") {
+      result.dryRun = true;
+      continue;
+    }
     result._.push(token);
   }
 
@@ -78,6 +84,7 @@ export async function runCli(argv, { projectRoot = process.cwd() } = {}) {
     const configOutput = typeof config.outputDir === "string" ? config.outputDir : null;
     const configTemplate = typeof config.template === "string" ? config.template : null;
     const configSkip = config.skip === true || config.skip === "true";
+    const configDryRun = config.dryRun === true || config.dryRun === "true";
     if (command === "save") {
       const url = rest[0];
       if (!url) {
@@ -94,19 +101,22 @@ export async function runCli(argv, { projectRoot = process.cwd() } = {}) {
       );
       const skipExisting = parsed.skip ?? configSkip ?? false;
       const filenameTemplate = parsed.template ?? configTemplate ?? null;
+      const dryRun = parsed.dryRun ?? configDryRun ?? false;
 
       const result = await saveJobSnapshot({
         url,
         outputRoot,
         skipExisting,
-        filenameTemplate
+        filenameTemplate,
+        dryRun
       });
+      const statusLabel = dryRun ? "Dry run" : result.skipped ? "Skipped" : "Saved";
       // eslint-disable-next-line no-console
-      console.log(`${result.skipped ? "Skipped" : "Saved"}: ${path.relative(process.cwd(), result.jobDir)}`);
+      console.log(`${statusLabel}: ${path.relative(process.cwd(), result.jobDir)}`);
       // eslint-disable-next-line no-console
-      console.log(`Markdown: ${path.relative(process.cwd(), result.mdPath)}`);
+      console.log(`${dryRun ? "Markdown (preview)" : "Markdown"}: ${path.relative(process.cwd(), result.mdPath)}`);
       // eslint-disable-next-line no-console
-      console.log(`Index: ${path.relative(process.cwd(), result.indexPath)}`);
+      console.log(`${dryRun ? "Index (preview)" : "Index"}: ${path.relative(process.cwd(), result.indexPath)}`);
       return 0;
     }
 
@@ -120,13 +130,15 @@ export async function runCli(argv, { projectRoot = process.cwd() } = {}) {
       }
 
       const filenameTemplate = parsed.template ?? configTemplate ?? null;
-      const result = await reparseJobSnapshot({ targetPath, filenameTemplate });
+      const dryRun = parsed.dryRun ?? configDryRun ?? false;
+      const result = await reparseJobSnapshot({ targetPath, filenameTemplate, dryRun });
+      const statusLabel = dryRun ? "Dry run" : "Reparsed";
       // eslint-disable-next-line no-console
-      console.log(`Reparsed: ${path.relative(process.cwd(), result.jobDir)}`);
+      console.log(`${statusLabel}: ${path.relative(process.cwd(), result.jobDir)}`);
       // eslint-disable-next-line no-console
-      console.log(`Markdown: ${path.relative(process.cwd(), result.mdPath)}`);
+      console.log(`${dryRun ? "Markdown (preview)" : "Markdown"}: ${path.relative(process.cwd(), result.mdPath)}`);
       // eslint-disable-next-line no-console
-      console.log(`Index: ${path.relative(process.cwd(), result.indexPath)}`);
+      console.log(`${dryRun ? "Index (preview)" : "Index"}: ${path.relative(process.cwd(), result.indexPath)}`);
       return 0;
     }
 
