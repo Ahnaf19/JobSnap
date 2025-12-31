@@ -1,0 +1,117 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>JobSnap Options</title>
+    <style>
+      body {
+        font-family: "Avenir Next", Avenir, Futura, "Trebuchet MS", sans-serif;
+        margin: 0;
+        padding: 16px;
+        background: radial-gradient(circle at top, #fff2e6, #f4ede6 60%, #efe5db 100%);
+        color: #251d17;
+      }
+      .panel {
+        max-width: 460px;
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 18px;
+        box-shadow: 0 14px 26px rgba(31, 20, 10, 0.12);
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .logo {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        box-shadow: 0 6px 12px rgba(255, 122, 47, 0.2);
+        margin-top: -2px;
+      }
+      .title {
+        font-size: 18px;
+        font-weight: 700;
+      }
+      .subtitle {
+        font-size: 12px;
+        color: #6a5a50;
+        margin-top: 2px;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+      .field label {
+        font-size: 12px;
+        color: #6a5a50;
+      }
+      .checkbox-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .checkbox {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #5d4f46;
+        background: #fff7f0;
+        border: 1px solid #eadfd5;
+        border-radius: 999px;
+        padding: 6px 10px;
+      }
+      .checkbox input {
+        accent-color: #ff7a2f;
+      }
+      .helper {
+        font-size: 11px;
+        color: #8a776a;
+      }
+      #status {
+        font-size: 12px;
+        color: #4c4036;
+        margin-top: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="panel">
+      <div class="header">
+        <img class="logo" src="img/jobsnap-icon.svg" alt="JobSnap" />
+        <div>
+          <div class="title">JobSnap Preferences</div>
+          <div class="subtitle">Defaults for filename parts in the popup.</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Filename parts</label>
+        <div class="checkbox-row">
+          <label class="checkbox">
+            <input type="checkbox" name="filename-part" value="title" />
+            Title
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" name="filename-part" value="company" />
+            Company
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" name="filename-part" value="job_id" />
+            Job ID
+          </label>
+        </div>
+        <div class="helper">Fixed order: title -> company -> job id</div>
+      </div>
+
+      <div id="status"></div>
+    </div>
+    <script src="options.js"></script>
+  </body>
+</html>

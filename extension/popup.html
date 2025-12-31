@@ -19,6 +19,19 @@
         padding: 14px;
         box-shadow: 0 10px 20px rgba(31, 20, 10, 0.12);
       }
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .logo {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        box-shadow: 0 6px 12px rgba(255, 122, 47, 0.2);
+        margin-top: -4px;
+      }
       .title {
         font-size: 16px;
         font-weight: 700;
@@ -27,7 +40,7 @@
       .subtitle {
         font-size: 12px;
         color: #6a5a50;
-        margin-bottom: 12px;
+        margin-bottom: 0;
       }
       .btn {
         width: 100%;
@@ -55,6 +68,10 @@
         color: #2b231f;
         border: 1px solid #e0d6cc;
         box-shadow: 0 6px 12px rgba(60, 40, 20, 0.08);
+      }
+      .btn-secondary:hover {
+        background: #efe5db;
+        border-color: #ddcbbb;
       }
       .btn:disabled {
         opacity: 0.6;
@@ -90,6 +107,25 @@
         font-size: 10px;
         color: #8a776a;
       }
+      .checkbox-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .checkbox {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        color: #5d4f46;
+        background: #fff7f0;
+        border: 1px solid #eadfd5;
+        border-radius: 999px;
+        padding: 4px 8px;
+      }
+      .checkbox input {
+        accent-color: #ff7a2f;
+      }
       .field input:focus {
         border-color: #ff8a3d;
         box-shadow: 0 0 0 2px rgba(255, 138, 61, 0.2);
@@ -99,13 +135,20 @@
         font-size: 12px;
         color: #4c4036;
         white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
     </style>
   </head>
   <body>
     <div class="panel">
-      <div class="title">JobSnap</div>
-      <div class="subtitle">Save a BDJobs JD in one click.</div>
+      <div class="header">
+        <img class="logo" src="img/jobsnap-icon.svg" alt="JobSnap" />
+        <div>
+          <div class="title">JobSnap</div>
+          <div class="subtitle">Save a BDJobs JD in one click.</div>
+        </div>
+      </div>
       <button id="download-tab" class="btn btn-primary">Download from current tab</button>
       <div class="divider">or</div>
       <div class="field">
@@ -118,14 +161,22 @@
         />
       </div>
       <div class="field">
-        <label for="template-input">Filename template</label>
-        <input
-          id="template-input"
-          type="text"
-          placeholder="{title}_{company}_{job_id}.md"
-          autocomplete="off"
-        />
-        <div class="helper">Use {title}, {company}, {job_id}</div>
+        <label>Filename parts</label>
+        <div class="checkbox-row">
+          <label class="checkbox">
+            <input type="checkbox" name="filename-part" value="title" />
+            Title
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" name="filename-part" value="company" />
+            Company
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" name="filename-part" value="job_id" />
+            Job ID
+          </label>
+        </div>
+        <div class="helper">Fixed order: title -> company -> job id</div>
       </div>
       <button id="download-url" class="btn btn-secondary">Download from URL</button>
       <div id="status"></div>

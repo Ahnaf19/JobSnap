@@ -1,9 +1,16 @@
 const statusEl = document.getElementById("status");
 const urlInput = document.getElementById("url-input");
-const templateInput = document.getElementById("template-input");
+const filenamePartInputs = Array.from(document.querySelectorAll('input[name="filename-part"]'));
 const downloadTabBtn = document.getElementById("download-tab");
 const downloadUrlBtn = document.getElementById("download-url");
 const DEFAULT_TEMPLATE = "{title}_{company}_{job_id}.md";
+const DEFAULT_PARTS = ["title", "company", "job_id"];
+const PART_ORDER = ["title", "company", "job_id"];
+const PART_TOKENS = {
+  title: "{title}",
+  company: "{company}",
+  job_id: "{job_id}"
+};
 
 function setStatus(text) {
   if (statusEl) statusEl.textContent = text;
@@ -13,7 +20,29 @@ function setBusy(isBusy) {
   if (downloadTabBtn) downloadTabBtn.disabled = isBusy;
   if (downloadUrlBtn) downloadUrlBtn.disabled = isBusy;
   if (urlInput) urlInput.disabled = isBusy;
-  if (templateInput) templateInput.disabled = isBusy;
+  filenamePartInputs.forEach((input) => {
+    input.disabled = isBusy;
+  });
+}
+
+function getSelectedParts() {
+  const selected = new Set(
+    filenamePartInputs.filter((input) => input.checked).map((input) => input.value)
+  );
+  return PART_ORDER.filter((part) => selected.has(part));
+}
+
+function applySelectedParts(parts) {
+  const selected = new Set(Array.isArray(parts) ? parts : []);
+  filenamePartInputs.forEach((input) => {
+    input.checked = selected.has(input.value);
+  });
+}
+
+function buildTemplateFromParts(parts) {
+  const tokens = parts.map((part) => PART_TOKENS[part]).filter(Boolean);
+  if (!tokens.length) return null;
+  return `${tokens.join("_")}.md`;
 }
 
 async function getActiveTab() {
@@ -93,7 +122,11 @@ async function handleCurrentTab() {
       }
     }
 
-    const template = String(templateInput?.value || "").trim() || DEFAULT_TEMPLATE;
+    const template = buildTemplateFromParts(getSelectedParts());
+    if (!template) {
+      setStatus("Select at least one filename part.");
+      return;
+    }
     const response = await chrome.tabs.sendMessage(tab.id, {
       type: "JOBSNAP_EXTRACT_MD",
       template
@@ -103,7 +136,7 @@ async function handleCurrentTab() {
       return;
     }
     downloadMarkdown({ filename: response.filename, markdown: response.markdown });
-    setStatus(`Downloaded:\n${response.filename}`);
+    setStatus(`Last snapped:\n${response.filename}`);
   } catch (err) {
     setStatus(String(err?.message ?? err));
   } finally {
@@ -138,7 +171,11 @@ async function handleUrlDownload() {
     const savedAt = new Date().toISOString();
     const job = parseBdjobsHtml({ html, url: inputValue, jobId, savedAt });
     const markdown = renderJobMd(job);
-    const template = String(templateInput?.value || "").trim() || DEFAULT_TEMPLATE;
+    const template = buildTemplateFromParts(getSelectedParts());
+    if (!template) {
+      setStatus("Select at least one filename part.");
+      return;
+    }
     const filename = buildFilename({
       template,
       title: job.title,
@@ -146,7 +183,7 @@ async function handleUrlDownload() {
       jobId: job.job_id ?? jobId
     });
     downloadMarkdown({ filename, markdown });
-    setStatus(`Downloaded:\n${filename}`);
+    setStatus(`Last snapped:\n${filename}`);
   } catch (err) {
     setStatus(String(err?.message ?? err));
   } finally {
@@ -157,23 +194,35 @@ async function handleUrlDownload() {
 downloadTabBtn?.addEventListener("click", handleCurrentTab);
 downloadUrlBtn?.addEventListener("click", handleUrlDownload);
 
-async function loadStoredTemplate() {
-  if (!templateInput) return;
+async function loadStoredFilenameParts() {
+  if (!filenamePartInputs.length) return;
   try {
-    const stored = await chrome.storage.sync.get({ filenameTemplate: DEFAULT_TEMPLATE });
-    templateInput.value = stored.filenameTemplate || DEFAULT_TEMPLATE;
+    const stored = await chrome.storage.sync.get({
+      filenameParts: null,
+      filenameTemplate: DEFAULT_TEMPLATE
+    });
+    if (Array.isArray(stored.filenameParts) && stored.filenameParts.length) {
+      applySelectedParts(stored.filenameParts);
+      return;
+    }
+    const template = String(stored.filenameTemplate || DEFAULT_TEMPLATE);
+    const parts = PART_ORDER.filter((part) => template.includes(PART_TOKENS[part]));
+    applySelectedParts(parts.length ? parts : DEFAULT_PARTS);
   } catch {
-    templateInput.value = DEFAULT_TEMPLATE;
+    applySelectedParts(DEFAULT_PARTS);
   }
 }
 
-templateInput?.addEventListener("change", async () => {
-  const value = String(templateInput.value || "").trim();
-  try {
-    await chrome.storage.sync.set({ filenameTemplate: value || DEFAULT_TEMPLATE });
-  } catch {
-    // ignore storage errors
-  }
+filenamePartInputs.forEach((input) => {
+  input.addEventListener("change", async () => {
+    const parts = getSelectedParts();
+    try {
+      await chrome.storage.sync.set({ filenameParts: parts });
+    } catch {
+      // ignore storage errors
+    }
+  });
 });
 
-loadStoredTemplate();
+applySelectedParts(DEFAULT_PARTS);
+loadStoredFilenameParts();
