@@ -13,11 +13,32 @@
 ![JobSnap demo](assets/jobsnap-demo.gif)
 
 JobSnap snapshots a BDJobs circular to your disk (raw HTML, structured JSON, and clean Markdown) the moment you apply.  
-The CLI is the v0.3 focus; the extension reuses the same parser.
+The CLI and extension share the same parser and output format.
 
 ## Requirements
 
 - Node.js 18+ (tested with Node 22)
+
+## Install
+
+From source (repo):
+
+```bash
+npm install
+```
+
+NPM (global, from this repo):
+
+```bash
+npm install -g .
+```
+
+Single-file build (for sharing a one-file CLI):
+
+```bash
+npm run build:single
+./dist/jobsnap.js --help
+```
 
 ## Quick start (CLI)
 
@@ -33,41 +54,67 @@ Or:
 npm run jobsnap -- save "https://bdjobs.com/jobs/details/1436685"
 ```
 
+Global install:
+
+```bash
+jobsnap save "https://bdjobs.com/jobs/details/1436685"
+```
+
 Re-parse an existing snapshot (no re-download):
 
 ```bash
 node ./cli/jobsnap.js reparse jobs/1436685
 ```
 
-## CLI commands
+## CLI Reference (all options)
 
-| Command | Args | Description |
-| --- | --- | --- |
-| `save` | `<bdjobs_url> [--out <dir>] [--skip] [--template <pattern>]` | Download a circular, parse it, and save the snapshot. |
-| `reparse` | `<job_dir \| raw_html>` | Rebuild `job.json`/`job.md` from an existing `raw.html`. |
-| `--help` | `-h` | Show usage and examples. |
-
-## CLI arguments
+```
+jobsnap save <bdjobs_url> [--out <dir>] [--skip] [--template <pattern>] [--dry-run]
+jobsnap reparse <job_dir|raw_html> [--template <pattern>] [--dry-run]
+jobsnap --help (-h)
+```
 
 - `--out <dir>`: output root folder (defaults to `jobs/`)
 - `--skip`: do not overwrite if the job already exists
 - `--template <pattern>`: filename template, e.g. `{title}_{company}_{job_id}.md`
+- `--dry-run`: preview output paths without writing files
 - `--help` / `-h`: show usage + examples
 
-Examples (covering every arg):
+## CLI Usage (what it does)
+
+Save a circular (fetch + parse + write `raw.html`, `job.json`, `job.md`, and update `index.jsonl`):
 
 ```bash
 node ./cli/jobsnap.js save "https://bdjobs.com/jobs/details/1436685"
+```
+
+Re-parse an existing snapshot (reads `raw.html`, rebuilds `job.json` + `job.md`, updates `index.jsonl`):
+
+```bash
+node ./cli/jobsnap.js reparse jobs/1436685
+```
+
+Dry run (no writes, just shows planned output paths):
+
+```bash
+node ./cli/jobsnap.js save "https://bdjobs.com/jobs/details/1436685" --dry-run
+node ./cli/jobsnap.js reparse jobs/1436685 --dry-run
+```
+
+Option examples:
+
+```bash
 node ./cli/jobsnap.js save "https://bdjobs.com/jobs/details/1436685" --out ./jobs
 node ./cli/jobsnap.js save "https://bdjobs.com/jobs/details/1436685" --skip
 node ./cli/jobsnap.js save "https://bdjobs.com/jobs/details/1436685" --template "{title}_{company}_{job_id}.md"
-node ./cli/jobsnap.js reparse jobs/1436685
-node ./cli/jobsnap.js reparse jobs/1436685/raw.html
+node ./cli/jobsnap.js reparse jobs/1436685/raw.html --template "{title}_{company}_{job_id}.md"
 ```
 
 ## Help
 
 ```bash
+jobsnap --help
+# or
 node ./cli/jobsnap.js --help
 # or
 npm run jobsnap -- --help
@@ -100,7 +147,8 @@ You can set defaults in a local `jobsnap.config.json`:
 {
   "outputDir": "jobs",
   "skip": false,
-  "template": "{title}_{company}_{job_id}.md"
+  "template": "{title}_{company}_{job_id}.md",
+  "dryRun": false
 }
 ```
 
@@ -174,5 +222,10 @@ Or:
 
 Filename template:
 
-1. Set a template (e.g. `{title}_{company}_{job_id}.md`) in the popup.
-2. JobSnap remembers it via extension storage.
+1. Pick the filename parts (Title, Company, Job ID) in the popup.
+2. JobSnap uses a fixed order: title -> company -> job id.
+
+Defaults:
+
+1. Open the extension options page (chrome://extensions → JobSnap → Details → Extension options).
+2. The popup uses those defaults on new installs.
