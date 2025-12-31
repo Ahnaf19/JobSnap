@@ -5,6 +5,7 @@ import test from "node:test";
 
 import { parseBdjobsHtml } from "../core/parseBdjobsHtml.js";
 import { renderJobMd } from "../core/renderJobMd.js";
+import { validateJobSchema, MD_HEADINGS } from "../core/schema.js";
 
 const repoRoot = process.cwd();
 const docsFixturesDir = path.join(repoRoot, "docs", "fixtures", "bdjobs");
@@ -26,16 +27,7 @@ async function loadManifest() {
 
 const manifest = await loadManifest();
 
-const allowedHeadings = new Set([
-  "Summary",
-  "Requirements",
-  "Responsibilities & Context",
-  "Skills & Expertise",
-  "Compensation & Other Benefits",
-  "Read Before Apply",
-  "Company Information",
-  "Raw Text"
-]);
+const allowedHeadings = new Set(MD_HEADINGS);
 
 function getTopHeadings(md) {
   return md
@@ -94,6 +86,9 @@ test("regression fixtures (docs)", { skip: manifest.length === 0 }, async () => 
     assertString(job.url, "url");
     assertString(job.source, "source");
     assertString(job.parser_version, "parser_version");
+
+    const schema = validateJobSchema(job);
+    assert.equal(schema.ok, true, schema.errors.join("; "));
 
     assertSectionHasContent(job.summary, "summary");
     assertSectionHasContent(job.requirements, "requirements");
