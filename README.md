@@ -15,6 +15,19 @@
 JobSnap snapshots a BDJobs circular to your disk (raw HTML, structured JSON, and clean Markdown) the moment you apply.  
 The CLI and extension share the same parser and output format.
 
+## Why JobSnap
+
+- Keep a reliable, offline copy of every JD you apply to.
+- Get a clean Markdown version for notes, comparisons, and LLM workflows.
+- Save once, revisit anytime without re-opening BDJobs.
+
+## What you get
+
+- `raw.html`: original snapshot
+- `job.json`: structured fields
+- `job.md`: clean, LLM-friendly Markdown
+- `index.jsonl`: append-only catalog
+
 ## Requirements
 
 - Node.js 18+ (tested with Node 22)
@@ -39,6 +52,12 @@ Single-file build (for sharing a one-file CLI):
 npm run build:single
 ./dist/jobsnap.js --help
 ```
+
+## Onboarding (3 steps)
+
+1. Install (repo, global, or single-file).
+2. Save one JD with the CLI or extension.
+3. Reparse later from `raw.html` if the site changes.
 
 ## Quick start (CLI)
 
@@ -65,6 +84,13 @@ Re-parse an existing snapshot (no re-download):
 ```bash
 node ./cli/jobsnap.js reparse jobs/1436685
 ```
+
+## Quick start (Extension)
+
+1. Open `chrome://extensions`
+2. Enable Developer mode
+3. Load unpacked `extension/`
+4. Open a BDJobs job page and click JobSnap
 
 ## CLI Reference (all options)
 
@@ -214,6 +240,18 @@ node ./cli/jobsnap.js save "https://bdjobs.com/jobs/details/1436685" --skip
 npm test
 ```
 
+Fixture regression (only runs if `docs/fixtures/bdjobs/manifest.jsonl` exists):
+
+```bash
+node --test
+```
+
+## Release checklist (maintainers)
+
+- `node --test` (unit + schema + fixtures)
+- CLI smoke: `jobsnap save <url>` and `jobsnap reparse <job_dir>`
+- Extension smoke: current tab + pasted URL, check filename parts + options
+
 ## Extension
 
 The `extension/` folder contains a MV3 extension that downloads a Markdown file
@@ -250,3 +288,9 @@ Defaults:
 
 1. Open the extension options page (chrome://extensions → JobSnap → Details → Extension options).
 2. The popup uses those defaults on new installs.
+
+## Roadmap (v2.0 preview)
+
+- LLM summary (must-haves vs nice-to-haves)
+- CV comparison + gap analysis
+- Local search/tagging across saved JDs
