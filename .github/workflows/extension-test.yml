@@ -1,0 +1,66 @@
+name: Extension Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate-extension:
+    name: Validate Chrome Extension
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate manifest.json
+        run: |
+          echo "Validating extension/manifest.json..."
+          node -e "
+            const fs = require('fs');
+            try {
+              const manifest = JSON.parse(fs.readFileSync('extension/manifest.json', 'utf-8'));
+              console.log('✓ manifest.json is valid JSON');
+              console.log('  Version:', manifest.version);
+              console.log('  Manifest version:', manifest.manifest_version);
+            } catch (err) {
+              console.error('✗ manifest.json validation failed:', err.message);
+              process.exit(1);
+            }
+          "
+
+      - name: Check core sync
+        run: |
+          echo "Checking core/ files are synced to extension/core/..."
+
+          # Check if parser.js is synced
+          if ! diff -q core/parser.js extension/core/parser.js > /dev/null 2>&1; then
+            echo "✗ core/parser.js is out of sync with extension/core/parser.js"
+            echo "Run: npm run sync-extension"
+            exit 1
+          fi
+
+          echo "✓ Core files are in sync"
+
+      - name: Check for common extension issues
+        run: |
+          echo "Checking for common extension issues..."
+
+          # Check if background.js exists
+          if [ ! -f "extension/background.js" ]; then
+            echo "⚠ Warning: extension/background.js not found"
+          fi
+
+          # Check if popup.html exists
+          if [ ! -f "extension/popup.html" ]; then
+            echo "⚠ Warning: extension/popup.html not found"
+          fi
+
+          echo "✓ Extension structure check complete"

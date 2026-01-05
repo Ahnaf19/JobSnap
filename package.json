@@ -18,9 +18,14 @@
     "build:single": "node ./scripts/build-single-file.js",
     "smoke": "node ./cli/jobsnap.js --help",
     "sync-extension": "node ./scripts/sync-extension-core.js",
-    "test": "node --test"
+    "test": "node --test",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.2"
   }
 }

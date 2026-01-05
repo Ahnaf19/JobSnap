@@ -125,7 +125,8 @@ jobsnap save "https://bdjobs.com/jobs/details/1436686" --skip
 jobsnap save "https://bdjobs.com/jobs/details/1436687" --skip
 ```
 
-> **Tip:** The `--skip` flag prevents overwriting jobs you've already saved.
+> [!TIP]
+> The `--skip` flag prevents overwriting jobs you've already saved.
 
 ---
 
@@ -443,7 +444,7 @@ Please read our [Contributing Guide](CONTRIBUTING.md) before submitting pull req
 
 ## Acknowledgments
 
-Built to solve a real problem faced during my December 2024 job search in Bangladesh.
+Built to solve a real problem faced during my December 2023 job search in Bangladesh.
 
 **Questions or feedback?** [Open an issue](../../issues) or reach out!
 
