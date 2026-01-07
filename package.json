@@ -32,13 +32,6 @@
     "lint-staged": "^16.2.7"
   },
   "lint-staged": {
-    "*.js": [
-      "eslint --fix",
-      "git add"
-    ],
-    "extension/core/*.js": [
-      "npm run sync-extension",
-      "git add extension/core"
-    ]
+    "*.js": "eslint --fix"
   }
 }
