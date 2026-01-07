@@ -20,12 +20,25 @@
     "sync-extension": "node ./scripts/sync-extension-core.js",
     "test": "node --test",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "prepare": "husky"
   },
   "engines": {
     "node": ">=18"
   },
   "devDependencies": {
-    "eslint": "^8.57.1"
+    "eslint": "^8.57.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "git add"
+    ],
+    "extension/core/*.js": [
+      "npm run sync-extension",
+      "git add extension/core"
+    ]
   }
 }
