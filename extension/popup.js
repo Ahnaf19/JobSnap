@@ -1,15 +1,15 @@
-const statusEl = document.getElementById("status");
-const urlInput = document.getElementById("url-input");
+const statusEl = document.getElementById('status');
+const urlInput = document.getElementById('url-input');
 const filenamePartInputs = Array.from(document.querySelectorAll('input[name="filename-part"]'));
-const downloadTabBtn = document.getElementById("download-tab");
-const downloadUrlBtn = document.getElementById("download-url");
-const DEFAULT_TEMPLATE = "{title}_{company}_{job_id}.md";
-const DEFAULT_PARTS = ["title", "company", "job_id"];
-const PART_ORDER = ["title", "company", "job_id"];
+const downloadTabBtn = document.getElementById('download-tab');
+const downloadUrlBtn = document.getElementById('download-url');
+const DEFAULT_TEMPLATE = '{title}_{company}_{job_id}.md';
+const DEFAULT_PARTS = ['title', 'company', 'job_id'];
+const PART_ORDER = ['title', 'company', 'job_id'];
 const PART_TOKENS = {
-  title: "{title}",
-  company: "{company}",
-  job_id: "{job_id}"
+  title: '{title}',
+  company: '{company}',
+  job_id: '{job_id}'
 };
 
 function setStatus(text) {
@@ -42,7 +42,7 @@ function applySelectedParts(parts) {
 function buildTemplateFromParts(parts) {
   const tokens = parts.map((part) => PART_TOKENS[part]).filter(Boolean);
   if (!tokens.length) return null;
-  return `${tokens.join("_")}.md`;
+  return `${tokens.join('_')}.md`;
 }
 
 async function getActiveTab() {
@@ -54,7 +54,7 @@ async function injectContentScript(tabId) {
   try {
     await chrome.scripting.executeScript({
       target: { tabId },
-      files: ["content.js"]
+      files: ['content.js']
     });
     return true;
   } catch (err) {
@@ -64,7 +64,7 @@ async function injectContentScript(tabId) {
 
 async function pingContentScript(tabId) {
   try {
-    const response = await chrome.tabs.sendMessage(tabId, { type: "JOBSNAP_PING" });
+    const response = await chrome.tabs.sendMessage(tabId, { type: 'JOBSNAP_PING' });
     return Boolean(response?.ok);
   } catch (err) {
     return false;
@@ -75,10 +75,10 @@ let corePromise = null;
 async function loadCore() {
   if (!corePromise) {
     corePromise = Promise.all([
-      import(chrome.runtime.getURL("core/parseBdjobsHtml.js")),
-      import(chrome.runtime.getURL("core/renderJobMd.js")),
-      import(chrome.runtime.getURL("core/extractJobId.js")),
-      import(chrome.runtime.getURL("core/filename.js"))
+      import(chrome.runtime.getURL('core/parseBdjobsHtml.js')),
+      import(chrome.runtime.getURL('core/renderJobMd.js')),
+      import(chrome.runtime.getURL('core/extractJobId.js')),
+      import(chrome.runtime.getURL('core/filename.js'))
     ]);
   }
   const [
@@ -91,7 +91,7 @@ async function loadCore() {
 }
 
 function downloadMarkdown({ filename, markdown }) {
-  const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+  const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   chrome.downloads.download(
     {
@@ -104,12 +104,12 @@ function downloadMarkdown({ filename, markdown }) {
 }
 
 async function handleCurrentTab() {
-  setStatus("Working...");
+  setStatus('Working...');
   setBusy(true);
   try {
     const tab = await getActiveTab();
     if (!tab?.id) {
-      setStatus("No active tab.");
+      setStatus('No active tab.');
       return;
     }
 
@@ -117,22 +117,22 @@ async function handleCurrentTab() {
     if (!ready) {
       const injected = await injectContentScript(tab.id);
       if (!injected) {
-        setStatus("Could not inject content script. Make sure this is a BDJobs job page.");
+        setStatus('Could not inject content script. Make sure this is a BDJobs job page.');
         return;
       }
     }
 
     const template = buildTemplateFromParts(getSelectedParts());
     if (!template) {
-      setStatus("Select at least one filename part.");
+      setStatus('Select at least one filename part.');
       return;
     }
     const response = await chrome.tabs.sendMessage(tab.id, {
-      type: "JOBSNAP_EXTRACT_MD",
+      type: 'JOBSNAP_EXTRACT_MD',
       template
     });
     if (!response?.markdown) {
-      setStatus(response?.error || "Could not extract content on this page.");
+      setStatus(response?.error || 'Could not extract content on this page.');
       return;
     }
     downloadMarkdown({ filename: response.filename, markdown: response.markdown });
@@ -145,23 +145,23 @@ async function handleCurrentTab() {
 }
 
 async function handleUrlDownload() {
-  const inputValue = String(urlInput?.value ?? "").trim();
+  const inputValue = String(urlInput?.value ?? '').trim();
   if (!inputValue) {
-    setStatus("Paste a BDJobs link first.");
+    setStatus('Paste a BDJobs link first.');
     return;
   }
 
-  setStatus("Fetching...");
+  setStatus('Fetching...');
   setBusy(true);
   try {
     const { parseBdjobsHtml, renderJobMd, extractJobId, buildFilename } = await loadCore();
     const jobId = extractJobId(inputValue);
     if (!jobId) {
-      setStatus("Not a supported BDJobs job details URL.");
+      setStatus('Not a supported BDJobs job details URL.');
       return;
     }
 
-    const response = await fetch(inputValue, { credentials: "omit" });
+    const response = await fetch(inputValue, { credentials: 'omit' });
     if (!response.ok) {
       setStatus(`Fetch failed (${response.status}).`);
       return;
@@ -173,7 +173,7 @@ async function handleUrlDownload() {
     const markdown = renderJobMd(job);
     const template = buildTemplateFromParts(getSelectedParts());
     if (!template) {
-      setStatus("Select at least one filename part.");
+      setStatus('Select at least one filename part.');
       return;
     }
     const filename = buildFilename({
@@ -191,8 +191,8 @@ async function handleUrlDownload() {
   }
 }
 
-downloadTabBtn?.addEventListener("click", handleCurrentTab);
-downloadUrlBtn?.addEventListener("click", handleUrlDownload);
+downloadTabBtn?.addEventListener('click', handleCurrentTab);
+downloadUrlBtn?.addEventListener('click', handleUrlDownload);
 
 async function loadStoredFilenameParts() {
   if (!filenamePartInputs.length) return;
@@ -214,7 +214,7 @@ async function loadStoredFilenameParts() {
 }
 
 filenamePartInputs.forEach((input) => {
-  input.addEventListener("change", async () => {
+  input.addEventListener('change', async () => {
     const parts = getSelectedParts();
     try {
       await chrome.storage.sync.set({ filenameParts: parts });

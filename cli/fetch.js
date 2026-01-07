@@ -1,12 +1,12 @@
-import { CliError, ExitCode } from "./errors.js";
+import { CliError, ExitCode } from './errors.js';
 
 export async function fetchHtml(url) {
   let response;
   try {
     response = await fetch(url, {
-      redirect: "follow",
+      redirect: 'follow',
       headers: {
-        "user-agent": "JobSnap/0.3 (+https://localhost)"
+        'user-agent': 'JobSnap/0.3 (+https://localhost)'
       }
     });
   } catch (err) {
@@ -15,9 +15,9 @@ export async function fetchHtml(url) {
 
   if (!response.ok) {
     const status = `${response.status} ${response.statusText}`.trim();
-    let hint = "Check the URL and try again.";
-    if (response.status === 404) hint = "The job may be expired or the URL is incorrect.";
-    if (response.status === 403) hint = "The page may require login or block automated requests.";
+    let hint = 'Check the URL and try again.';
+    if (response.status === 404) hint = 'The job may be expired or the URL is incorrect.';
+    if (response.status === 403) hint = 'The page may require login or block automated requests.';
     throw new CliError(`Fetch failed: ${status}. ${hint}`, ExitCode.FETCH_FAILED);
   }
 

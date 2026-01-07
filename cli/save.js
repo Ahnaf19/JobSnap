@@ -1,13 +1,13 @@
-import fs from "node:fs/promises";
-import path from "node:path";
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
-import { extractJobId } from "../core/extractJobId.js";
-import { buildFilename } from "../core/filename.js";
-import { parseBdjobsHtml } from "../core/parseBdjobsHtml.js";
-import { renderJobMd } from "../core/renderJobMd.js";
-import { CliError, ExitCode } from "./errors.js";
-import { fetchHtml } from "./fetch.js";
-import { persistSnapshot } from "./snapshot.js";
+import { extractJobId } from '../core/extractJobId.js';
+import { buildFilename } from '../core/filename.js';
+import { parseBdjobsHtml } from '../core/parseBdjobsHtml.js';
+import { renderJobMd } from '../core/renderJobMd.js';
+import { CliError, ExitCode } from './errors.js';
+import { fetchHtml } from './fetch.js';
+import { persistSnapshot } from './snapshot.js';
 
 async function pathExists(filePath) {
   try {
@@ -20,7 +20,7 @@ async function pathExists(filePath) {
 
 async function readJson(filePath) {
   try {
-    const raw = await fs.readFile(filePath, "utf8");
+    const raw = await fs.readFile(filePath, 'utf8');
     return JSON.parse(raw);
   } catch {
     return null;
@@ -37,13 +37,13 @@ export async function saveJobSnapshot({
   const jobId = extractJobId(url);
   if (!jobId) {
     throw new CliError(
-      "Could not extract job_id from URL. Expected /jobs/details/<job_id>.",
+      'Could not extract job_id from URL. Expected /jobs/details/<job_id>.',
       ExitCode.INVALID_ARGS
     );
   }
 
   const jobDir = path.join(outputRoot, jobId);
-  const existingJson = path.join(jobDir, "job.json");
+  const existingJson = path.join(jobDir, 'job.json');
   if (skipExisting && (await pathExists(existingJson))) {
     const existing = await readJson(existingJson);
     const mdFilename = buildFilename({
@@ -56,7 +56,7 @@ export async function saveJobSnapshot({
       jobId,
       jobDir,
       mdPath: path.join(jobDir, mdFilename),
-      indexPath: path.join(outputRoot, "index.jsonl"),
+      indexPath: path.join(outputRoot, 'index.jsonl'),
       skipped: true,
       dryRun
     };
@@ -67,7 +67,7 @@ export async function saveJobSnapshot({
   const job = parseBdjobsHtml({ html, url, savedAt, jobId });
   if (!job) {
     throw new CliError(
-      "Parse failed: no job data extracted. The page may not be a job details page.",
+      'Parse failed: no job data extracted. The page may not be a job details page.',
       ExitCode.PARSE_FAILED
     );
   }
@@ -80,7 +80,7 @@ export async function saveJobSnapshot({
   });
 
   const plannedMdPath = path.join(jobDir, mdFilename);
-  const plannedIndexPath = path.join(outputRoot, "index.jsonl");
+  const plannedIndexPath = path.join(outputRoot, 'index.jsonl');
   if (dryRun) {
     return {
       jobId,

@@ -1,0 +1,74 @@
+name: Extension Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate-extension:
+    name: Validate Chrome Extension
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate manifest.json
+        run: |
+          echo "Validating extension/manifest.json..."
+          node -e "
+            const fs = require('fs');
+            try {
+              const manifest = JSON.parse(fs.readFileSync('extension/manifest.json', 'utf-8'));
+              console.log('✓ manifest.json is valid JSON');
+              console.log('  Version:', manifest.version);
+              console.log('  Manifest version:', manifest.manifest_version);
+            } catch (err) {
+              console.error('✗ manifest.json validation failed:', err.message);
+              process.exit(1);
+            }
+          "
+
+      - name: Check core sync
+        run: |
+          echo "Checking core/ files are synced to extension/core/..."
+
+          # Check all .js files in core/ are synced to extension/core/
+          failed=0
+          for file in core/*.js; do
+            filename=$(basename "$file")
+            if ! diff -q "$file" "extension/core/$filename" > /dev/null 2>&1; then
+              echo "✗ $file is out of sync with extension/core/$filename"
+              failed=1
+            fi
+          done
+
+          if [ $failed -eq 1 ]; then
+            echo "Run: npm run sync-extension"
+            exit 1
+          fi
+
+          echo "✓ Core files are in sync"
+
+      - name: Check for common extension issues
+        run: |
+          echo "Checking for common extension issues..."
+
+          # Check if background.js exists
+          if [ ! -f "extension/background.js" ]; then
+            echo "⚠ Warning: extension/background.js not found"
+          fi
+
+          # Check if popup.html exists
+          if [ ! -f "extension/popup.html" ]; then
+            echo "⚠ Warning: extension/popup.html not found"
+          fi
+
+          echo "✓ Extension structure check complete"
