@@ -40,9 +40,17 @@ jobs:
         run: |
           echo "Checking core/ files are synced to extension/core/..."
 
-          # Check if parser.js is synced
-          if ! diff -q core/parser.js extension/core/parser.js > /dev/null 2>&1; then
-            echo "✗ core/parser.js is out of sync with extension/core/parser.js"
+          # Check all .js files in core/ are synced to extension/core/
+          failed=0
+          for file in core/*.js; do
+            filename=$(basename "$file")
+            if ! diff -q "$file" "extension/core/$filename" > /dev/null 2>&1; then
+              echo "✗ $file is out of sync with extension/core/$filename"
+              failed=1
+            fi
+          done
+
+          if [ $failed -eq 1 ]; then
             echo "Run: npm run sync-extension"
             exit 1
           fi
