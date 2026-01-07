@@ -1,22 +1,22 @@
-import { extractTitleTag, htmlToText } from "./html.js";
-import { extractDetailsFromLines, extractLabelValuePairs } from "./kv.js";
-import { normalizeWhitespace } from "./strings.js";
-import { PARSER_VERSION } from "./version.js";
+import { extractTitleTag, htmlToText } from './html.js';
+import { extractDetailsFromLines, extractLabelValuePairs } from './kv.js';
+import { normalizeWhitespace } from './strings.js';
+import { PARSER_VERSION } from './version.js';
 
 function escapeRegex(text) {
-  return String(text ?? "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return String(text ?? '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function cleanPageTitle(title) {
-  return String(title ?? "")
-    .replace(/\s*\|\s*bdjobs(\.com)?\s*$/i, "")
-    .replace(/\s*-\s*bdjobs(\.com)?\s*$/i, "")
+  return String(title ?? '')
+    .replace(/\s*\|\s*bdjobs(\.com)?\s*$/i, '')
+    .replace(/\s*-\s*bdjobs(\.com)?\s*$/i, '')
     .trim();
 }
 
 function parseTitleCompanyFromPageTitle(pageTitle) {
   const cleaned = cleanPageTitle(pageTitle);
-  const separators = [" - ", " : ", " | ", " — ", " – "];
+  const separators = [' - ', ' : ', ' | ', ' — ', ' – '];
   for (const sep of separators) {
     if (!cleaned.includes(sep)) continue;
     const parts = cleaned
@@ -38,15 +38,15 @@ function extractFirstMatch(text, regex) {
 
 function stripFooter(text) {
   const markers = [
-    "report this job / company",
-    "need any support?",
-    "our contact centre",
-    "job seekers",
-    "recruiter",
-    "download job seeker app",
-    "download employer app",
-    "our valuable partners",
-    "stay connected with us"
+    'report this job / company',
+    'need any support?',
+    'our contact centre',
+    'job seekers',
+    'recruiter',
+    'download job seeker app',
+    'download employer app',
+    'our valuable partners',
+    'stay connected with us'
   ];
 
   const lower = text.toLowerCase();
@@ -67,12 +67,12 @@ function removeCalloutLines(text) {
     /to access application insights/i
   ];
 
-  const lines = text.split("\n");
+  const lines = text.split('\n');
   const filtered = lines.filter((line) => !patterns.some((pattern) => pattern.test(line)));
-  return filtered.join("\n").trim();
+  return filtered.join('\n').trim();
 }
 
-const SUMMARY_PLACEHOLDERS = new Set(["--", "-", "n/a", "na", "not applicable", "not specified"]);
+const SUMMARY_PLACEHOLDERS = new Set(['--', '-', 'n/a', 'na', 'not applicable', 'not specified']);
 
 function normalizeSummaryValue(value) {
   if (value === null || value === undefined) return null;
@@ -85,8 +85,8 @@ function normalizeSummaryValue(value) {
 function cleanSummaryValues(summary) {
   const cleaned = {};
   for (const [key, value] of Object.entries(summary)) {
-    const firstLine = String(value ?? "")
-      .split("\n")
+    const firstLine = String(value ?? '')
+      .split('\n')
       .map((line) => line.trim())
       .filter(Boolean)[0];
     const normalized = normalizeSummaryValue(firstLine);
@@ -97,7 +97,7 @@ function cleanSummaryValues(summary) {
 }
 
 function extractNgStateJson(html) {
-  const match = String(html ?? "").match(
+  const match = String(html ?? '').match(
     /<script[^>]*id=["']ng-state["'][^>]*>([\s\S]*?)<\/script>/i
   );
   if (!match?.[1]) return null;
@@ -111,9 +111,9 @@ function extractNgStateJson(html) {
 }
 
 function extractJobDetailsFromState(state) {
-  if (!state || typeof state !== "object") return null;
+  if (!state || typeof state !== 'object') return null;
   for (const entry of Object.values(state)) {
-    if (!entry?.u || !String(entry.u).includes("Job-Details")) continue;
+    if (!entry?.u || !String(entry.u).includes('Job-Details')) continue;
     const data = entry?.b?.data;
     if (Array.isArray(data) && data.length) return data[0];
   }
@@ -123,18 +123,18 @@ function extractJobDetailsFromState(state) {
 function splitCommaList(value) {
   if (!value) return null;
   const items = String(value)
-    .split(",")
+    .split(',')
     .map((item) => item.trim())
     .filter(Boolean);
   return items.length ? items : null;
 }
 
 function normalizeCommaSpace(value) {
-  return String(value ?? "").replace(/,\s*/g, ", ").trim();
+  return String(value ?? '').replace(/,\s*/g, ', ').trim();
 }
 
 function sliceSection(text, heading, { startIndex = 0 } = {}) {
-  const pattern = new RegExp(`(^|\\n)\\s*${escapeRegex(heading)}\\s*:?(\\s*\\n|\\s*$)`, "im");
+  const pattern = new RegExp(`(^|\\n)\\s*${escapeRegex(heading)}\\s*:?(\\s*\\n|\\s*$)`, 'im');
   const match = pattern.exec(text.slice(startIndex));
   if (!match) return null;
   const absoluteIndex = startIndex + match.index;
@@ -143,19 +143,19 @@ function sliceSection(text, heading, { startIndex = 0 } = {}) {
 
 function buildSectionSlices(text) {
   const order = [
-    { key: "summary", headings: ["Summary"] },
-    { key: "requirements", headings: ["Requirements"] },
+    { key: 'summary', headings: ['Summary'] },
+    { key: 'requirements', headings: ['Requirements'] },
     {
-      key: "responsibilities_context",
-      headings: ["Responsibilities & Context", "Responsibilities and Context", "Responsibilities"]
+      key: 'responsibilities_context',
+      headings: ['Responsibilities & Context', 'Responsibilities and Context', 'Responsibilities']
     },
-    { key: "skills_expertise", headings: ["Skills & Expertise"] },
+    { key: 'skills_expertise', headings: ['Skills & Expertise'] },
     {
-      key: "compensation_other_benefits",
-      headings: ["Compensation & Other Benefits", "Compensation and Other Benefits", "Salary & Benefits"]
+      key: 'compensation_other_benefits',
+      headings: ['Compensation & Other Benefits', 'Compensation and Other Benefits', 'Salary & Benefits']
     },
-    { key: "read_before_apply", headings: ["Read Before Apply"] },
-    { key: "company_information", headings: ["Company Information"] }
+    { key: 'read_before_apply', headings: ['Read Before Apply'] },
+    { key: 'company_information', headings: ['Company Information'] }
   ];
 
   const found = [];
@@ -199,11 +199,11 @@ function buildSectionSlices(text) {
 }
 
 function parseBullets(sectionText) {
-  const lines = normalizeWhitespace(sectionText).split("\n");
+  const lines = normalizeWhitespace(sectionText).split('\n');
   const bullets = [];
   for (const line of lines) {
     const trimmed = line.trim();
-    if (!trimmed.startsWith("- ")) continue;
+    if (!trimmed.startsWith('- ')) continue;
     const bullet = trimmed.slice(2).trim();
     if (bullet) bullets.push(bullet);
   }
@@ -228,7 +228,7 @@ function parseLooseLines(text, { dropHeadings = [] } = {}) {
     return false;
   };
   const lines = normalizeWhitespace(text)
-    .split("\n")
+    .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
     .filter((line) => !shouldDrop(line));
@@ -236,39 +236,39 @@ function parseLooseLines(text, { dropHeadings = [] } = {}) {
 }
 
 function stripHeading(chunk, heading) {
-  const lines = String(chunk ?? "").split("\n");
+  const lines = String(chunk ?? '').split('\n');
   while (lines.length && !lines[0].trim()) lines.shift();
   if (lines.length) {
-    const normalize = (value) => value.trim().replace(/:$/, "").toLowerCase();
+    const normalize = (value) => value.trim().replace(/:$/, '').toLowerCase();
     if (normalize(lines[0]) === normalize(heading)) {
       lines.shift();
     }
   }
-  return lines.join("\n").trim();
+  return lines.join('\n').trim();
 }
 
 function stripAnyHeading(chunk, headings) {
   for (const heading of headings) {
     const stripped = stripHeading(chunk, heading);
-    if (stripped !== String(chunk ?? "").trim()) return stripped;
+    if (stripped !== String(chunk ?? '').trim()) return stripped;
   }
-  return String(chunk ?? "").trim();
+  return String(chunk ?? '').trim();
 }
 
 function expandInlineHeadingLines(text, headings) {
-  const lines = String(text ?? "").split("\n");
+  const lines = String(text ?? '').split('\n');
   const output = [];
   for (const line of lines) {
     const trimmed = line.trim();
     if (!trimmed) continue;
-    if (trimmed.startsWith("- ")) {
+    if (trimmed.startsWith('- ')) {
       output.push(trimmed);
       continue;
     }
 
     let matched = false;
     for (const heading of headings) {
-      const pattern = new RegExp(`^${escapeRegex(heading)}\\s*:\\s*(.+)$`, "i");
+      const pattern = new RegExp(`^${escapeRegex(heading)}\\s*:\\s*(.+)$`, 'i');
       const match = trimmed.match(pattern);
       if (!match) continue;
       output.push(heading);
@@ -281,7 +281,7 @@ function expandInlineHeadingLines(text, headings) {
     if (!matched) output.push(trimmed);
   }
 
-  return output.join("\n");
+  return output.join('\n');
 }
 
 function extractSubsectionBlocks(text, headings) {
@@ -302,8 +302,8 @@ function extractSubsectionBlocks(text, headings) {
     const chunk = cleaned.slice(current.index, end);
     const body = stripHeading(chunk, current.heading);
     const bullets = parseBullets(body);
-    const normalizedText = bullets.length ? "" : normalizeWhitespace(body);
-    const textBlock = normalizedText === "-" ? "" : normalizedText;
+    const normalizedText = bullets.length ? '' : normalizeWhitespace(body);
+    const textBlock = normalizedText === '-' ? '' : normalizedText;
     if (!bullets.length && !textBlock) continue;
     blocks.push({
       title: current.heading,
@@ -334,8 +334,8 @@ function extractSubsectionMap(text, items) {
     const chunk = cleaned.slice(current.index, end);
     const body = stripHeading(chunk, current.title);
     const bullets = parseBullets(body);
-    const normalizedText = bullets.length ? "" : normalizeWhitespace(body);
-    const textBlock = normalizedText === "-" ? "" : normalizedText;
+    const normalizedText = bullets.length ? '' : normalizeWhitespace(body);
+    const textBlock = normalizedText === '-' ? '' : normalizedText;
     if (!bullets.length && !textBlock) continue;
     result[current.key] = {
       bullets: bullets.length ? bullets : null,
@@ -348,35 +348,35 @@ function extractSubsectionMap(text, items) {
 
 function parseRequirements(sectionText) {
   const sections = extractSubsectionMap(sectionText, [
-    { key: "education", title: "Education" },
-    { key: "experience", title: "Experience" },
-    { key: "additional_requirements", title: "Additional Requirements" },
-    { key: "required_skills", title: "Required Skills" },
-    { key: "preferred_qualifications", title: "Preferred Qualifications" }
+    { key: 'education', title: 'Education' },
+    { key: 'experience', title: 'Experience' },
+    { key: 'additional_requirements', title: 'Additional Requirements' },
+    { key: 'required_skills', title: 'Required Skills' },
+    { key: 'preferred_qualifications', title: 'Preferred Qualifications' }
   ]);
   if (sections) return sections;
 
-  const cleaned = stripAnyHeading(sectionText, ["Requirements"]);
+  const cleaned = stripAnyHeading(sectionText, ['Requirements']);
   const bullets = parseBullets(cleaned);
   if (bullets.length) return { additional_requirements: { bullets } };
 
-  const lines = parseLooseLines(cleaned, { dropHeadings: ["Requirements"] });
+  const lines = parseLooseLines(cleaned, { dropHeadings: ['Requirements'] });
   if (lines?.length) return { additional_requirements: { bullets: lines } };
   return null;
 }
 
 function parseResponsibilities(sectionText) {
   const cleaned = stripAnyHeading(sectionText, [
-    "Responsibilities & Context",
-    "Responsibilities and Context",
-    "Responsibilities"
+    'Responsibilities & Context',
+    'Responsibilities and Context',
+    'Responsibilities'
   ]);
   const blocks = extractSubsectionBlocks(cleaned, [
-    "About Us",
-    "The Role",
-    "Key Responsibilities",
-    "Job Context",
-    "Job Responsibilities"
+    'About Us',
+    'The Role',
+    'Key Responsibilities',
+    'Job Context',
+    'Job Responsibilities'
   ]);
 
   if (!blocks.length) {
@@ -401,7 +401,7 @@ function parseSkills(sectionText) {
   if (!cleaned) return null;
 
   const lower = cleaned.toLowerCase();
-  const markers = ["suggested by bdjobs", "suggested by"];
+  const markers = ['suggested by bdjobs', 'suggested by'];
   let markerIndex = -1;
   let markerLength = 0;
   for (const marker of markers) {
@@ -413,7 +413,7 @@ function parseSkills(sectionText) {
   }
 
   const skillsText = markerIndex === -1 ? cleaned : cleaned.slice(0, markerIndex);
-  const suggestedText = markerIndex === -1 ? "" : cleaned.slice(markerIndex + markerLength);
+  const suggestedText = markerIndex === -1 ? '' : cleaned.slice(markerIndex + markerLength);
 
   const headingFilter = (line) => !/^(skills\s*&\s*expertise|suggested by( bdjobs)?)$/i.test(line.trim());
 
@@ -421,7 +421,7 @@ function parseSkills(sectionText) {
     const bullets = parseBullets(text);
     if (bullets.length) return bullets;
     const lines = text
-      .split("\n")
+      .split('\n')
       .map((line) => line.trim())
       .filter(Boolean)
       .filter(headingFilter);
@@ -439,10 +439,10 @@ function parseSkills(sectionText) {
 }
 
 function parseCompensation(sectionText) {
-  const cleaned = normalizeWhitespace(stripAnyHeading(sectionText, ["Compensation & Other Benefits", "Salary & Benefits"]));
+  const cleaned = normalizeWhitespace(stripAnyHeading(sectionText, ['Compensation & Other Benefits', 'Salary & Benefits']));
   const bullets = parseBullets(cleaned);
   const details = extractDetailsFromLines(cleaned, {
-    skipHeadings: ["Compensation & Other Benefits", "Salary & Benefits"]
+    skipHeadings: ['Compensation & Other Benefits', 'Salary & Benefits']
   });
   const result = {};
   if (bullets.length) result.benefits = bullets;
@@ -451,11 +451,11 @@ function parseCompensation(sectionText) {
 }
 
 function parseCompanyInfo(sectionText) {
-  const cleaned = normalizeWhitespace(stripAnyHeading(sectionText, ["Company Information"]))
-    .split("\n")
+  const cleaned = normalizeWhitespace(stripAnyHeading(sectionText, ['Company Information']))
+    .split('\n')
     .filter((line) => !/more jobs from this company/i.test(line))
-    .join("\n");
-  const details = extractDetailsFromLines(cleaned, { skipHeadings: ["Company Information"] });
+    .join('\n');
+  const details = extractDetailsFromLines(cleaned, { skipHeadings: ['Company Information'] });
   if (Object.keys(details).length) return { details };
   return cleaned ? { raw_text: cleaned } : null;
 }
@@ -464,8 +464,8 @@ function parseAdditionalRequirementsHtml(htmlFragment) {
   if (!htmlFragment) return null;
   const text = htmlToText(htmlFragment);
   const sections = extractSubsectionMap(text, [
-    { key: "additional_requirements", title: "Requirements" },
-    { key: "preferred_qualifications", title: "Preferred Qualifications" }
+    { key: 'additional_requirements', title: 'Requirements' },
+    { key: 'preferred_qualifications', title: 'Preferred Qualifications' }
   ]);
   if (sections) return sections;
   const bullets = parseBullets(text);
@@ -505,30 +505,30 @@ function parseJobDetails(details, { url, savedAt, jobId } = {}) {
   const skills_expertise =
     skills || suggested
       ? {
-          skills: skills ?? null,
-          suggested_by_bdjobs: suggested ?? null
-        }
+        skills: skills ?? null,
+        suggested_by_bdjobs: suggested ?? null
+      }
       : null;
 
   let benefits = null;
   if (details.JobOtherBenifits) {
     benefits =
       parseHtmlBullets(details.JobOtherBenifits) ??
-      parseLooseLines(htmlToText(details.JobOtherBenifits), { dropHeadings: ["What We Offer"] });
+      parseLooseLines(htmlToText(details.JobOtherBenifits), { dropHeadings: ['What We Offer'] });
   }
 
   const compensationDetails = {};
   if (details.JobWorkPlace) compensationDetails.workplace = normalizeCommaSpace(details.JobWorkPlace);
   if (details.JobNature) compensationDetails.employment_status = details.JobNature;
-  if (details.Gender && details.Gender !== "Na") compensationDetails.gender = details.Gender;
+  if (details.Gender && details.Gender !== 'Na') compensationDetails.gender = details.Gender;
   if (details.JobLocation) compensationDetails.job_location = details.JobLocation;
 
   const compensation_other_benefits =
     benefits || Object.keys(compensationDetails).length
       ? {
-          benefits: benefits ?? null,
-          details: Object.keys(compensationDetails).length ? compensationDetails : null
-        }
+        benefits: benefits ?? null,
+        details: Object.keys(compensationDetails).length ? compensationDetails : null
+      }
       : null;
 
   const read_before_apply = details.ApplyInstruction
@@ -544,18 +544,18 @@ function parseJobDetails(details, { url, savedAt, jobId } = {}) {
     const normalized = normalizeSummaryValue(value);
     if (normalized) summary[key] = normalized;
   };
-  addSummary("vacancy", details.JobVacancies);
-  if (experienceBullets?.length) addSummary("experience", experienceBullets[0]);
-  addSummary("age", details.Age);
-  addSummary("location", details.JobLocation);
-  addSummary("salary", details.JobSalaryRangeText || details.JobSalaryRange);
-  addSummary("published", details.PostedOn);
+  addSummary('vacancy', details.JobVacancies);
+  if (experienceBullets?.length) addSummary('experience', experienceBullets[0]);
+  addSummary('age', details.Age);
+  addSummary('location', details.JobLocation);
+  addSummary('salary', details.JobSalaryRangeText || details.JobSalaryRange);
+  addSummary('published', details.PostedOn);
 
   return {
     job_id: parsedJobId ?? null,
     url: url ?? (parsedJobId ? `https://bdjobs.com/jobs/details/${parsedJobId}` : null),
     saved_at: savedAt,
-    source: "bdjobs",
+    source: 'bdjobs',
     parser_version: PARSER_VERSION,
     title,
     company,
@@ -579,7 +579,7 @@ function parseFromText({ html, url, savedAt, jobId } = {}) {
   pageText = removeCalloutLines(pageText);
   pageText = normalizeWhitespace(pageText);
 
-  const header = parseTitleCompanyFromPageTitle(titleTag ?? "");
+  const header = parseTitleCompanyFromPageTitle(titleTag ?? '');
   const application_deadline =
     extractFirstMatch(pageText, /Application Deadline\s*:\s*([^\n]+)/i) ??
     extractFirstMatch(pageText, /Application Deadline\s*([^\n]+)/i);
@@ -590,7 +590,7 @@ function parseFromText({ html, url, savedAt, jobId } = {}) {
     sectionTextByKey[range.key] = pageText.slice(range.start, range.end);
   }
 
-  const summaryText = sectionTextByKey.summary ?? "";
+  const summaryText = sectionTextByKey.summary ?? '';
   const summary = cleanSummaryValues(extractLabelValuePairs(summaryText));
 
   const requirements = sectionTextByKey.requirements ? parseRequirements(sectionTextByKey.requirements) : null;
@@ -611,7 +611,7 @@ function parseFromText({ html, url, savedAt, jobId } = {}) {
     job_id: jobId ?? null,
     url: url ?? null,
     saved_at: savedAt,
-    source: "bdjobs",
+    source: 'bdjobs',
     parser_version: PARSER_VERSION,
     title: header.title,
     company: header.company,
@@ -623,7 +623,7 @@ function parseFromText({ html, url, savedAt, jobId } = {}) {
     skills_expertise,
     compensation_other_benefits,
     read_before_apply: sectionTextByKey.read_before_apply
-      ? normalizeWhitespace(stripAnyHeading(sectionTextByKey.read_before_apply, ["Read Before Apply"]))
+      ? normalizeWhitespace(stripAnyHeading(sectionTextByKey.read_before_apply, ['Read Before Apply']))
       : null,
     company_information,
     raw_text: pageText
@@ -632,9 +632,9 @@ function parseFromText({ html, url, savedAt, jobId } = {}) {
 
 function isEmptyValue(value) {
   if (value === null || value === undefined) return true;
-  if (typeof value === "string") return value.trim().length === 0;
+  if (typeof value === 'string') return value.trim().length === 0;
   if (Array.isArray(value)) return value.length === 0;
-  if (typeof value === "object") return Object.keys(value).length === 0;
+  if (typeof value === 'object') return Object.keys(value).length === 0;
   return false;
 }
 

@@ -1,29 +1,29 @@
-import assert from "node:assert/strict";
-import fs from "node:fs/promises";
-import path from "node:path";
-import test from "node:test";
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import test from 'node:test';
 
-import { parseBdjobsHtml } from "../core/parseBdjobsHtml.js";
-import { renderJobMd } from "../core/renderJobMd.js";
+import { parseBdjobsHtml } from '../core/parseBdjobsHtml.js';
+import { renderJobMd } from '../core/renderJobMd.js';
 import {
   validateJobSchema,
   MD_HEADINGS,
   migrateIndexEntry,
   validateIndexEntry,
   createIndexEntry
-} from "../core/schema.js";
+} from '../core/schema.js';
 
 const repoRoot = process.cwd();
-const fixtureDir = path.join(repoRoot, "tests", "fixtures");
+const fixtureDir = path.join(repoRoot, 'tests', 'fixtures');
 
 async function loadFixture(name) {
-  return await fs.readFile(path.join(fixtureDir, name), "utf8");
+  return await fs.readFile(path.join(fixtureDir, name), 'utf8');
 }
 
 function getTopHeadings(md) {
   return md
-    .split("\n")
-    .filter((line) => line.startsWith("## "))
+    .split('\n')
+    .filter((line) => line.startsWith('## '))
     .map((line) => line.slice(3).trim());
 }
 
@@ -31,17 +31,17 @@ function getTopHeadings(md) {
 // v1.0 Schema Tests
 // =============================================================================
 
-test("schema validation passes on baseline fixtures", async () => {
-  const html = await loadFixture("job_details_1.html");
+test('schema validation passes on baseline fixtures', async () => {
+  const html = await loadFixture('job_details_1.html');
   const job = parseBdjobsHtml({
     html,
-    url: "https://bdjobs.com/jobs/details/123",
-    jobId: "123",
-    savedAt: "test"
+    url: 'https://bdjobs.com/jobs/details/123',
+    jobId: '123',
+    savedAt: 'test'
   });
 
   const result = validateJobSchema(job);
-  assert.equal(result.ok, true, result.errors.join("; "));
+  assert.equal(result.ok, true, result.errors.join('; '));
 
   const md = renderJobMd(job);
   const headings = getTopHeadings(md);
@@ -54,7 +54,7 @@ test("schema validation passes on baseline fixtures", async () => {
 // v2.0 Schema Tests (Backward Compatibility)
 // =============================================================================
 
-test("migrateIndexEntry preserves v1.0 fields", () => {
+test('migrateIndexEntry preserves v1.0 fields', () => {
   const v1Entry = {
     job_id: '1436685',
     title: 'Software Engineer',
@@ -80,7 +80,7 @@ test("migrateIndexEntry preserves v1.0 fields", () => {
   assert.equal(v2Entry.metadata.parser_version, '1.0.0');
 });
 
-test("migrateIndexEntry is idempotent (v2.0 entry unchanged)", () => {
+test('migrateIndexEntry is idempotent (v2.0 entry unchanged)', () => {
   const v2Entry = {
     job_id: '1436685',
     title: 'Software Engineer',
@@ -101,7 +101,7 @@ test("migrateIndexEntry is idempotent (v2.0 entry unchanged)", () => {
   assert.deepEqual(migrated, v2Entry);
 });
 
-test("validateIndexEntry passes for valid v2.0 entry", () => {
+test('validateIndexEntry passes for valid v2.0 entry', () => {
   const entry = {
     job_id: '1436685',
     title: 'Software Engineer',
@@ -122,7 +122,7 @@ test("validateIndexEntry passes for valid v2.0 entry", () => {
   assert.equal(result.errors.length, 0);
 });
 
-test("validateIndexEntry fails for missing required fields", () => {
+test('validateIndexEntry fails for missing required fields', () => {
   const entry = {
     job_id: '1436685',
     title: 'Software Engineer'
@@ -136,7 +136,7 @@ test("validateIndexEntry fails for missing required fields", () => {
   assert.ok(result.errors.includes('missing saved_at'));
 });
 
-test("validateIndexEntry fails for invalid tags type", () => {
+test('validateIndexEntry fails for invalid tags type', () => {
   const entry = {
     job_id: '1436685',
     title: 'Software Engineer',
@@ -151,7 +151,7 @@ test("validateIndexEntry fails for invalid tags type", () => {
   assert.ok(result.errors.includes('tags must be an array'));
 });
 
-test("createIndexEntry generates valid v2.0 entry from job", () => {
+test('createIndexEntry generates valid v2.0 entry from job', () => {
   const job = {
     job_id: '1436685',
     url: 'https://bdjobs.com/jobs/details/1436685',
@@ -196,7 +196,7 @@ test("createIndexEntry generates valid v2.0 entry from job", () => {
   assert.equal(validation.valid, true);
 });
 
-test("createIndexEntry handles missing optional fields", () => {
+test('createIndexEntry handles missing optional fields', () => {
   const job = {
     job_id: '1436685',
     url: 'https://bdjobs.com/jobs/details/1436685',

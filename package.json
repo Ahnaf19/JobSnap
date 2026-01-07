@@ -26,6 +26,6 @@
     "node": ">=18"
   },
   "devDependencies": {
-    "eslint": "^9.39.2"
+    "eslint": "^8.57.1"
   }
 }

@@ -1,4 +1,4 @@
-import { normalizeWhitespace, toKey } from "./strings.js";
+import { normalizeWhitespace, toKey } from './strings.js';
 
 export function extractLabelValuePairs(text) {
   const input = normalizeWhitespace(text);
@@ -28,7 +28,7 @@ export function extractDetailsFromLines(text, { skipHeadings = [] } = {}) {
 
   const skipSet = new Set(skipHeadings.map((h) => h.toLowerCase()));
   const lines = input
-    .split("\n")
+    .split('\n')
     .map((line) => line.trim())
     .filter(Boolean);
 
@@ -38,9 +38,9 @@ export function extractDetailsFromLines(text, { skipHeadings = [] } = {}) {
     const lower = line.toLowerCase();
 
     if (skipSet.has(lower)) continue;
-    if (line.startsWith("- ")) continue;
+    if (line.startsWith('- ')) continue;
 
-    const colonIndex = line.indexOf(":");
+    const colonIndex = line.indexOf(':');
     if (colonIndex > 0) {
       const label = line.slice(0, colonIndex).trim();
       const value = line.slice(colonIndex + 1).trim();
@@ -52,7 +52,7 @@ export function extractDetailsFromLines(text, { skipHeadings = [] } = {}) {
     }
 
     const next = lines[i + 1];
-    if (!next || next.startsWith("- ")) continue;
+    if (!next || next.startsWith('- ')) continue;
     if (skipSet.has(next.toLowerCase())) continue;
     if (line.length > 40) continue;
 

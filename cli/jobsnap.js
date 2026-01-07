@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { runCli } from "./run.js";
+import { runCli } from './run.js';
 
 runCli(process.argv.slice(2), { projectRoot: process.cwd() })
   .then((code) => {

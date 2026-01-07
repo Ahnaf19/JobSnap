@@ -1,16 +1,16 @@
-import fs from "node:fs/promises";
-import path from "node:path";
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
-import { extractJobId } from "../core/extractJobId.js";
-import { buildFilename } from "../core/filename.js";
-import { parseBdjobsHtml } from "../core/parseBdjobsHtml.js";
-import { renderJobMd } from "../core/renderJobMd.js";
-import { CliError, ExitCode } from "./errors.js";
-import { persistSnapshot } from "./snapshot.js";
+import { extractJobId } from '../core/extractJobId.js';
+import { buildFilename } from '../core/filename.js';
+import { parseBdjobsHtml } from '../core/parseBdjobsHtml.js';
+import { renderJobMd } from '../core/renderJobMd.js';
+import { CliError, ExitCode } from './errors.js';
+import { persistSnapshot } from './snapshot.js';
 
 async function readJson(filePath) {
   try {
-    const raw = await fs.readFile(filePath, "utf8");
+    const raw = await fs.readFile(filePath, 'utf8');
     return JSON.parse(raw);
   } catch {
     return null;
@@ -27,7 +27,7 @@ async function resolveRawHtmlPath(targetPath) {
   if (stats.isDirectory()) {
     return {
       jobDir: targetPath,
-      rawHtmlPath: path.join(targetPath, "raw.html")
+      rawHtmlPath: path.join(targetPath, 'raw.html')
     };
   }
 
@@ -48,20 +48,20 @@ export async function reparseJobSnapshot({ targetPath, filenameTemplate = null, 
     );
   }
 
-  const html = await fs.readFile(rawHtmlPath, "utf8");
+  const html = await fs.readFile(rawHtmlPath, 'utf8');
   const savedAt = new Date().toISOString();
 
-  const existing = await readJson(path.join(jobDir, "job.json"));
+  const existing = await readJson(path.join(jobDir, 'job.json'));
   const jobId =
     existing?.job_id ??
-    extractJobId(existing?.url ?? "") ??
+    extractJobId(existing?.url ?? '') ??
     (path.basename(jobDir).match(/^\d+$/) ? path.basename(jobDir) : null);
   const url = existing?.url ?? (jobId ? `https://bdjobs.com/jobs/details/${jobId}` : null);
 
   const job = parseBdjobsHtml({ html, url, jobId, savedAt });
   if (!job) {
     throw new CliError(
-      "Parse failed: no job data extracted. The HTML may be incomplete or invalid.",
+      'Parse failed: no job data extracted. The HTML may be incomplete or invalid.',
       ExitCode.PARSE_FAILED
     );
   }
@@ -75,7 +75,7 @@ export async function reparseJobSnapshot({ targetPath, filenameTemplate = null, 
 
   const outputRoot = path.dirname(jobDir);
   const plannedMdPath = path.join(jobDir, mdFilename);
-  const plannedIndexPath = path.join(outputRoot, "index.jsonl");
+  const plannedIndexPath = path.join(outputRoot, 'index.jsonl');
   if (dryRun) {
     return { jobDir, mdPath: plannedMdPath, indexPath: plannedIndexPath, dryRun: true };
   }

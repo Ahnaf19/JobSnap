@@ -1,12 +1,12 @@
-import path from "node:path";
+import path from 'node:path';
 
-import { loadConfig } from "./config.js";
-import { loadDotEnv } from "./env.js";
-import { CliError, ExitCode } from "./errors.js";
-import { reparseJobSnapshot } from "./reparse.js";
-import { saveJobSnapshot } from "./save.js";
+import { loadConfig } from './config.js';
+import { loadDotEnv } from './env.js';
+import { CliError, ExitCode } from './errors.js';
+import { reparseJobSnapshot } from './reparse.js';
+import { saveJobSnapshot } from './save.js';
 
-const DEFAULT_OUTPUT_DIR = "jobs";
+const DEFAULT_OUTPUT_DIR = 'jobs';
 
 function printHelp() {
   // eslint-disable-next-line no-console
@@ -40,33 +40,33 @@ function parseArgs(argv) {
   while (args.length) {
     const token = args.shift();
     if (!token) break;
-    if (token === "--help" || token === "-h") {
+    if (token === '--help' || token === '-h') {
       result.help = true;
       continue;
     }
-    if (token === "--out") {
+    if (token === '--out') {
       const value = args.shift();
-      if (!value || value.startsWith("-")) {
-        result.error = "Missing value for --out.";
+      if (!value || value.startsWith('-')) {
+        result.error = 'Missing value for --out.';
         break;
       }
       result.out = value;
       continue;
     }
-    if (token === "--template" || token === "--name") {
+    if (token === '--template' || token === '--name') {
       const value = args.shift();
-      if (!value || value.startsWith("-")) {
-        result.error = "Missing value for --template.";
+      if (!value || value.startsWith('-')) {
+        result.error = 'Missing value for --template.';
         break;
       }
       result.template = value;
       continue;
     }
-    if (token === "--skip" || token === "--skip-existing") {
+    if (token === '--skip' || token === '--skip-existing') {
       result.skip = true;
       continue;
     }
-    if (token === "--dry-run") {
+    if (token === '--dry-run') {
       result.dryRun = true;
       continue;
     }
@@ -97,20 +97,20 @@ export async function runCli(argv, { projectRoot = process.cwd() } = {}) {
 
   try {
     const config = await loadConfig(projectRoot);
-    const configOutput = typeof config.outputDir === "string" ? config.outputDir : null;
-    const configTemplate = typeof config.template === "string" ? config.template : null;
-    const configSkip = config.skip === true || config.skip === "true";
-    const configDryRun = config.dryRun === true || config.dryRun === "true";
-    if (command === "save") {
+    const configOutput = typeof config.outputDir === 'string' ? config.outputDir : null;
+    const configTemplate = typeof config.template === 'string' ? config.template : null;
+    const configSkip = config.skip === true || config.skip === 'true';
+    const configDryRun = config.dryRun === true || config.dryRun === 'true';
+    if (command === 'save') {
       const url = rest[0];
       if (!url) {
         // eslint-disable-next-line no-console
-        console.error("Missing URL.");
+        console.error('Missing URL.');
         printHelp();
         return ExitCode.INVALID_ARGS;
       }
 
-      const env = await loadDotEnv(path.join(projectRoot, ".env"));
+      const env = await loadDotEnv(path.join(projectRoot, '.env'));
       const outputRoot = path.resolve(
         projectRoot,
         parsed.out ?? configOutput ?? env.OUTPUT_DIR ?? DEFAULT_OUTPUT_DIR
@@ -126,21 +126,21 @@ export async function runCli(argv, { projectRoot = process.cwd() } = {}) {
         filenameTemplate,
         dryRun
       });
-      const statusLabel = dryRun ? "Dry run" : result.skipped ? "Skipped" : "Saved";
+      const statusLabel = dryRun ? 'Dry run' : result.skipped ? 'Skipped' : 'Saved';
       // eslint-disable-next-line no-console
       console.log(`${statusLabel}: ${path.relative(process.cwd(), result.jobDir)}`);
       // eslint-disable-next-line no-console
-      console.log(`${dryRun ? "Markdown (preview)" : "Markdown"}: ${path.relative(process.cwd(), result.mdPath)}`);
+      console.log(`${dryRun ? 'Markdown (preview)' : 'Markdown'}: ${path.relative(process.cwd(), result.mdPath)}`);
       // eslint-disable-next-line no-console
-      console.log(`${dryRun ? "Index (preview)" : "Index"}: ${path.relative(process.cwd(), result.indexPath)}`);
+      console.log(`${dryRun ? 'Index (preview)' : 'Index'}: ${path.relative(process.cwd(), result.indexPath)}`);
       return 0;
     }
 
-    if (command === "reparse") {
+    if (command === 'reparse') {
       const targetPath = rest[0];
       if (!targetPath) {
         // eslint-disable-next-line no-console
-        console.error("Missing job directory or raw.html path.");
+        console.error('Missing job directory or raw.html path.');
         printHelp();
         return ExitCode.INVALID_ARGS;
       }
@@ -148,13 +148,13 @@ export async function runCli(argv, { projectRoot = process.cwd() } = {}) {
       const filenameTemplate = parsed.template ?? configTemplate ?? null;
       const dryRun = parsed.dryRun ?? configDryRun ?? false;
       const result = await reparseJobSnapshot({ targetPath, filenameTemplate, dryRun });
-      const statusLabel = dryRun ? "Dry run" : "Reparsed";
+      const statusLabel = dryRun ? 'Dry run' : 'Reparsed';
       // eslint-disable-next-line no-console
       console.log(`${statusLabel}: ${path.relative(process.cwd(), result.jobDir)}`);
       // eslint-disable-next-line no-console
-      console.log(`${dryRun ? "Markdown (preview)" : "Markdown"}: ${path.relative(process.cwd(), result.mdPath)}`);
+      console.log(`${dryRun ? 'Markdown (preview)' : 'Markdown'}: ${path.relative(process.cwd(), result.mdPath)}`);
       // eslint-disable-next-line no-console
-      console.log(`${dryRun ? "Index (preview)" : "Index"}: ${path.relative(process.cwd(), result.indexPath)}`);
+      console.log(`${dryRun ? 'Index (preview)' : 'Index'}: ${path.relative(process.cwd(), result.indexPath)}`);
       return 0;
     }
 

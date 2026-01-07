@@ -1,8 +1,8 @@
-const statusEl = document.getElementById("status");
+const statusEl = document.getElementById('status');
 const filenamePartInputs = Array.from(document.querySelectorAll('input[name="filename-part"]'));
 
-const DEFAULT_PARTS = ["title", "company", "job_id"];
-const PART_ORDER = ["title", "company", "job_id"];
+const DEFAULT_PARTS = ['title', 'company', 'job_id'];
+const PART_ORDER = ['title', 'company', 'job_id'];
 
 function setStatus(text) {
   if (statusEl) statusEl.textContent = text;
@@ -37,19 +37,19 @@ async function loadStoredParts() {
 async function saveParts() {
   const parts = getSelectedParts();
   if (!parts.length) {
-    setStatus("Select at least one part.");
+    setStatus('Select at least one part.');
     return;
   }
   try {
     await chrome.storage.sync.set({ filenameParts: parts });
-    setStatus("Defaults saved.");
+    setStatus('Defaults saved.');
   } catch {
-    setStatus("Could not save defaults.");
+    setStatus('Could not save defaults.');
   }
 }
 
 filenamePartInputs.forEach((input) => {
-  input.addEventListener("change", saveParts);
+  input.addEventListener('change', saveParts);
 });
 
 loadStoredParts();

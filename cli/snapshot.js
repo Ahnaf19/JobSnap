@@ -1,22 +1,22 @@
-import crypto from "node:crypto";
-import path from "node:path";
+import crypto from 'node:crypto';
+import path from 'node:path';
 
-import { ensureDir, updateIndex, writeJson, writeText } from "./fs.js";
-import { CliError, ExitCode } from "./errors.js";
+import { ensureDir, updateIndex, writeJson, writeText } from './fs.js';
+import { CliError, ExitCode } from './errors.js';
 
 function sha256(text) {
-  return crypto.createHash("sha256").update(String(text ?? ""), "utf8").digest("hex");
+  return crypto.createHash('sha256').update(String(text ?? ''), 'utf8').digest('hex');
 }
 
 export async function persistSnapshot({ job, html, markdown, outputRoot, jobDir, savedAt, mdFilename }) {
-  if (!job) throw new Error("Missing job data.");
+  if (!job) throw new Error('Missing job data.');
 
   try {
     await ensureDir(jobDir);
 
-    const rawHtmlPath = path.join(jobDir, "raw.html");
-    const jsonPath = path.join(jobDir, "job.json");
-    const mdPath = path.join(jobDir, mdFilename || "job.md");
+    const rawHtmlPath = path.join(jobDir, 'raw.html');
+    const jsonPath = path.join(jobDir, 'job.json');
+    const mdPath = path.join(jobDir, mdFilename || 'job.md');
 
     await writeText(rawHtmlPath, html);
     await writeJson(jsonPath, job);
@@ -39,7 +39,7 @@ export async function persistSnapshot({ job, html, markdown, outputRoot, jobDir,
       parser_version: job.parser_version
     };
 
-    const indexPath = path.join(outputRoot, "index.jsonl");
+    const indexPath = path.join(outputRoot, 'index.jsonl');
     await updateIndex(indexPath, indexEntry);
 
     return { jobDir, mdPath, indexPath };
