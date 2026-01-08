@@ -50,9 +50,10 @@ export async function listCommand(options = {}) {
 
   if (sortBy === 'deadline') {
     entries.sort((a, b) => {
-      const deadlineA = a.application_deadline || '9999-12-31';
-      const deadlineB = b.application_deadline || '9999-12-31';
-      return deadlineA.localeCompare(deadlineB);
+      // Parse dates for proper chronological sorting
+      const dateA = a.application_deadline ? new Date(a.application_deadline) : new Date('9999-12-31');
+      const dateB = b.application_deadline ? new Date(b.application_deadline) : new Date('9999-12-31');
+      return dateA - dateB; // Earliest deadline first
     });
   } else if (sortBy === 'company') {
     entries.sort((a, b) => a.company.localeCompare(b.company));
