@@ -5,6 +5,7 @@ import { loadDotEnv } from './env.js';
 import { CliError, ExitCode } from './errors.js';
 import { reparseJobSnapshot } from './reparse.js';
 import { saveJobSnapshot } from './save.js';
+import { listCommand } from './commands/list.js';
 
 const DEFAULT_OUTPUT_DIR = 'jobs';
 
@@ -16,6 +17,7 @@ JobSnap CLI
 Usage:
   jobsnap save <bdjobs_url> [--out <dir>] [--skip] [--template <pattern>] [--dry-run]
   jobsnap reparse <job_dir|raw_html> [--template <pattern>] [--dry-run]
+  jobsnap list [--by <saved|deadline|company>] [--active] [--expired] [--tag <name>] [--out <dir>]
 
 Examples:
   jobsnap save "https://bdjobs.com/jobs/details/1436685"
@@ -26,6 +28,12 @@ Examples:
   jobsnap reparse jobs/1436685 --template "{title}_{company}_{job_id}.md"
   jobsnap reparse jobs/1436685/raw.html
   jobsnap reparse jobs/1436685 --dry-run
+  jobsnap list                              # All jobs, newest first
+  jobsnap list --by deadline                # Sort by deadline (urgent first)
+  jobsnap list --by company                 # Sort by company name
+  jobsnap list --active                     # Only jobs with future deadlines
+  jobsnap list --expired                    # Only jobs past deadline
+  jobsnap list --tag backend                # Filter by tag
 
 Config:
   - Optional .env at repo root with OUTPUT_DIR=...
@@ -68,6 +76,32 @@ function parseArgs(argv) {
     }
     if (token === '--dry-run') {
       result.dryRun = true;
+      continue;
+    }
+    if (token === '--by') {
+      const value = args.shift();
+      if (!value || value.startsWith('-')) {
+        result.error = 'Missing value for --by.';
+        break;
+      }
+      result.by = value;
+      continue;
+    }
+    if (token === '--active') {
+      result.active = true;
+      continue;
+    }
+    if (token === '--expired') {
+      result.expired = true;
+      continue;
+    }
+    if (token === '--tag') {
+      const value = args.shift();
+      if (!value || value.startsWith('-')) {
+        result.error = 'Missing value for --tag.';
+        break;
+      }
+      result.tag = value;
       continue;
     }
     result._.push(token);
@@ -155,6 +189,23 @@ export async function runCli(argv, { projectRoot = process.cwd() } = {}) {
       console.log(`${dryRun ? 'Markdown (preview)' : 'Markdown'}: ${path.relative(process.cwd(), result.mdPath)}`);
       // eslint-disable-next-line no-console
       console.log(`${dryRun ? 'Index (preview)' : 'Index'}: ${path.relative(process.cwd(), result.indexPath)}`);
+      return 0;
+    }
+
+    if (command === 'list') {
+      const env = await loadDotEnv(path.join(projectRoot, '.env'));
+      const outputRoot = path.resolve(
+        projectRoot,
+        parsed.out ?? configOutput ?? env.OUTPUT_DIR ?? DEFAULT_OUTPUT_DIR
+      );
+
+      await listCommand({
+        outputDir: outputRoot,
+        by: parsed.by,
+        active: parsed.active,
+        expired: parsed.expired,
+        tag: parsed.tag
+      });
       return 0;
     }
 
