@@ -65,9 +65,9 @@ test('IndexManager sorts by deadline correctly', async () => {
 
   // Sort by deadline (urgent first)
   const sorted = loaded.sort((a, b) => {
-    const deadlineA = a.application_deadline || '9999-12-31';
-    const deadlineB = b.application_deadline || '9999-12-31';
-    return deadlineA.localeCompare(deadlineB);
+    const dateA = a.application_deadline ? new Date(a.application_deadline) : new Date('9999-12-31');
+    const dateB = b.application_deadline ? new Date(b.application_deadline) : new Date('9999-12-31');
+    return dateA - dateB;
   });
 
   assert.equal(sorted[0].job_id, '1', 'Job with earliest deadline should be first');
