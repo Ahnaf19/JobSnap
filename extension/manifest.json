@@ -33,7 +33,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["core/*.js"],
+      "resources": ["core/*.js", "html2pdf.bundle.min.js"],
       "matches": ["https://bdjobs.com/*", "https://*.bdjobs.com/*"]
     }
   ]

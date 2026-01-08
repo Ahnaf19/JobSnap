@@ -1,6 +1,7 @@
 const statusEl = document.getElementById('status');
 const urlInput = document.getElementById('url-input');
 const filenamePartInputs = Array.from(document.querySelectorAll('input[name="filename-part"]'));
+const formatInputs = Array.from(document.querySelectorAll('input[name="download-format"]'));
 const downloadTabBtn = document.getElementById('download-tab');
 const downloadUrlBtn = document.getElementById('download-url');
 const DEFAULT_TEMPLATE = '{title}_{company}_{job_id}.md';
@@ -23,6 +24,14 @@ function setBusy(isBusy) {
   filenamePartInputs.forEach((input) => {
     input.disabled = isBusy;
   });
+  formatInputs.forEach((input) => {
+    input.disabled = isBusy;
+  });
+}
+
+function getSelectedFormat() {
+  const selected = formatInputs.find((input) => input.checked);
+  return selected?.value || 'markdown';
 }
 
 function getSelectedParts() {
@@ -78,16 +87,34 @@ async function loadCore() {
       import(chrome.runtime.getURL('core/parseBdjobsHtml.js')),
       import(chrome.runtime.getURL('core/renderJobMd.js')),
       import(chrome.runtime.getURL('core/extractJobId.js')),
-      import(chrome.runtime.getURL('core/filename.js'))
+      import(chrome.runtime.getURL('core/filename.js')),
+      import(chrome.runtime.getURL('core/exportPdf.js'))
     ]);
   }
   const [
     { parseBdjobsHtml },
     { renderJobMd },
     { extractJobId },
-    { buildFilename }
+    { buildFilename },
+    { exportJobAsPDF }
   ] = await corePromise;
-  return { parseBdjobsHtml, renderJobMd, extractJobId, buildFilename };
+  return { parseBdjobsHtml, renderJobMd, extractJobId, buildFilename, exportJobAsPDF };
+}
+
+let html2pdfLoaded = false;
+async function loadHtml2Pdf() {
+  if (html2pdfLoaded) return;
+
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = chrome.runtime.getURL('html2pdf.bundle.min.js');
+    script.onload = () => {
+      html2pdfLoaded = true;
+      resolve();
+    };
+    script.onerror = () => reject(new Error('Failed to load html2pdf library'));
+    document.head.appendChild(script);
+  });
 }
 
 function downloadMarkdown({ filename, markdown }) {
@@ -104,6 +131,7 @@ function downloadMarkdown({ filename, markdown }) {
 }
 
 async function handleCurrentTab() {
+  const format = getSelectedFormat();
   setStatus('Working...');
   setBusy(true);
   try {
@@ -135,13 +163,48 @@ async function handleCurrentTab() {
       setStatus(response?.error || 'Could not extract content on this page.');
       return;
     }
-    downloadMarkdown({ filename: response.filename, markdown: response.markdown });
-    setStatus(`Last snapped:\n${response.filename}`);
+
+    if (format === 'pdf') {
+      setStatus('Generating PDF...');
+      await loadHtml2Pdf();
+      const { exportJobAsPDF } = await loadCore();
+      // Extract job data from markdown frontmatter
+      const jobData = extractJobDataFromResponse(response);
+      await exportJobAsPDF({
+        jobData,
+        markdown: response.markdown,
+        filename: response.filename
+      });
+      setStatus(`Last snapped:\n${response.filename.replace(/\.md$/, '.pdf')}`);
+    } else {
+      downloadMarkdown({ filename: response.filename, markdown: response.markdown });
+      setStatus(`Last snapped:\n${response.filename}`);
+    }
   } catch (err) {
     setStatus(String(err?.message ?? err));
   } finally {
     setBusy(false);
   }
+}
+
+function extractJobDataFromResponse(response) {
+  // Parse YAML frontmatter to extract job metadata
+  const lines = response.markdown.split('\n');
+  const jobData = {};
+
+  if (lines[0] === '---') {
+    let i = 1;
+    while (i < lines.length && lines[i] !== '---') {
+      const match = lines[i].match(/^(\w+):\s*(.+)$/);
+      if (match) {
+        const [, key, value] = match;
+        jobData[key] = value.replace(/^["']|["']$/g, ''); // Remove quotes
+      }
+      i++;
+    }
+  }
+
+  return jobData;
 }
 
 async function handleUrlDownload() {
@@ -151,10 +214,11 @@ async function handleUrlDownload() {
     return;
   }
 
+  const format = getSelectedFormat();
   setStatus('Fetching...');
   setBusy(true);
   try {
-    const { parseBdjobsHtml, renderJobMd, extractJobId, buildFilename } = await loadCore();
+    const { parseBdjobsHtml, renderJobMd, extractJobId, buildFilename, exportJobAsPDF } = await loadCore();
     const jobId = extractJobId(inputValue);
     if (!jobId) {
       setStatus('Not a supported BDJobs job details URL.');
@@ -182,8 +246,20 @@ async function handleUrlDownload() {
       company: job.company,
       jobId: job.job_id ?? jobId
     });
-    downloadMarkdown({ filename, markdown });
-    setStatus(`Last snapped:\n${filename}`);
+
+    if (format === 'pdf') {
+      setStatus('Generating PDF...');
+      await loadHtml2Pdf();
+      await exportJobAsPDF({
+        jobData: job,
+        markdown,
+        filename
+      });
+      setStatus(`Last snapped:\n${filename.replace(/\.md$/, '.pdf')}`);
+    } else {
+      downloadMarkdown({ filename, markdown });
+      setStatus(`Last snapped:\n${filename}`);
+    }
   } catch (err) {
     setStatus(String(err?.message ?? err));
   } finally {
