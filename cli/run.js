@@ -6,6 +6,7 @@ import { CliError, ExitCode } from './errors.js';
 import { reparseJobSnapshot } from './reparse.js';
 import { saveJobSnapshot } from './save.js';
 import { listCommand } from './commands/list.js';
+import { exportCommand } from './commands/export.js';
 
 const DEFAULT_OUTPUT_DIR = 'jobs';
 
@@ -18,6 +19,7 @@ Usage:
   jobsnap save <bdjobs_url> [--out <dir>] [--skip] [--template <pattern>] [--dry-run]
   jobsnap reparse <job_dir|raw_html> [--template <pattern>] [--dry-run]
   jobsnap list [--by <saved|deadline|company>] [--active] [--expired] [--tag <name>] [--out <dir>]
+  jobsnap export <job_dir> [--format <pdf|html>]
 
 Examples:
   jobsnap save "https://bdjobs.com/jobs/details/1436685"
@@ -34,6 +36,8 @@ Examples:
   jobsnap list --active                     # Only jobs with future deadlines
   jobsnap list --expired                    # Only jobs past deadline
   jobsnap list --tag backend                # Filter by tag
+  jobsnap export jobs/1436685               # Generate PDF (default)
+  jobsnap export jobs/1436685 --format html # Generate HTML instead
 
 Config:
   - Optional .env at repo root with OUTPUT_DIR=...
@@ -102,6 +106,15 @@ function parseArgs(argv) {
         break;
       }
       result.tag = value;
+      continue;
+    }
+    if (token === '--format') {
+      const value = args.shift();
+      if (!value || value.startsWith('-')) {
+        result.error = 'Missing value for --format.';
+        break;
+      }
+      result.format = value;
       continue;
     }
     result._.push(token);
@@ -205,6 +218,22 @@ export async function runCli(argv, { projectRoot = process.cwd() } = {}) {
         active: parsed.active,
         expired: parsed.expired,
         tag: parsed.tag
+      });
+      return 0;
+    }
+
+    if (command === 'export') {
+      const jobDir = rest[0];
+      if (!jobDir) {
+        // eslint-disable-next-line no-console
+        console.error('Missing job directory.');
+        // eslint-disable-next-line no-console
+        console.error('Usage: jobsnap export <job_dir> [--format pdf|html]');
+        return ExitCode.INVALID_ARGS;
+      }
+
+      await exportCommand(jobDir, {
+        format: parsed.format
       });
       return 0;
     }
