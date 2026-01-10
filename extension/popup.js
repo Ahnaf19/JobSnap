@@ -117,6 +117,86 @@ async function loadHtml2Pdf() {
   });
 }
 
+/**
+ * Check if native PDF generation is available (Chrome/Edge only)
+ */
+function hasNativePDFSupport() {
+  return typeof chrome.tabs !== 'undefined' &&
+         typeof chrome.tabs.printToPDF === 'function';
+}
+
+/**
+ * Generate PDF using Chrome's native print engine (vector PDF)
+ */
+async function generatePDF_Native(jobData, markdown, filename) {
+  // Generate HTML using same template
+  const { generateJobHTML, stripMetadata } = await import(chrome.runtime.getURL('core/exportPdf.js'));
+  const cleanedMd = stripMetadata(markdown);
+  const html = generateJobHTML(jobData, cleanedMd);
+
+  // Send to service worker for native PDF generation
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(
+      {
+        type: 'GENERATE_PDF_NATIVE',
+        html,
+        filename
+      },
+      (response) => {
+        if (response?.success) {
+          // Download the PDF
+          const blob = new Blob([new Uint8Array(response.pdfData)], { type: 'application/pdf' });
+          const url = URL.createObjectURL(blob);
+          const pdfFilename = response.filename;
+
+          chrome.downloads.download(
+            {
+              url,
+              filename: pdfFilename,
+              saveAs: true
+            },
+            () => {
+              URL.revokeObjectURL(url);
+              resolve(pdfFilename);
+            }
+          );
+        } else {
+          reject(new Error(response?.error || 'PDF generation failed'));
+        }
+      }
+    );
+  });
+}
+
+/**
+ * Generate PDF using html2pdf.js fallback (rasterized PDF)
+ */
+async function generatePDF_Fallback(jobData, markdown, filename) {
+  await loadHtml2Pdf();
+  const { exportJobAsPDF } = await loadCore();
+
+  await exportJobAsPDF({
+    jobData,
+    markdown,
+    filename
+  });
+
+  return filename.replace(/\.md$/, '.pdf');
+}
+
+/**
+ * Generate PDF using best available method
+ */
+async function generatePDF(jobData, markdown, filename) {
+  if (hasNativePDFSupport()) {
+    // Chrome/Edge: Use native PDF (vector, ~200KB)
+    return await generatePDF_Native(jobData, markdown, filename);
+  } else {
+    // Firefox/Safari: Use html2pdf.js (raster, ~400KB)
+    return await generatePDF_Fallback(jobData, markdown, filename);
+  }
+}
+
 function downloadMarkdown({ filename, markdown }) {
   const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
   const url = URL.createObjectURL(blob);
@@ -166,16 +246,9 @@ async function handleCurrentTab() {
 
     if (format === 'pdf') {
       setStatus('Generating PDF...');
-      await loadHtml2Pdf();
-      const { exportJobAsPDF } = await loadCore();
-      // Extract job data from markdown frontmatter
       const jobData = extractJobDataFromResponse(response);
-      await exportJobAsPDF({
-        jobData,
-        markdown: response.markdown,
-        filename: response.filename
-      });
-      setStatus(`Last snapped:\n${response.filename.replace(/\.md$/, '.pdf')}`);
+      const pdfFilename = await generatePDF(jobData, response.markdown, response.filename);
+      setStatus(`Last snapped:\n${pdfFilename}`);
     } else {
       downloadMarkdown({ filename: response.filename, markdown: response.markdown });
       setStatus(`Last snapped:\n${response.filename}`);
@@ -218,7 +291,7 @@ async function handleUrlDownload() {
   setStatus('Fetching...');
   setBusy(true);
   try {
-    const { parseBdjobsHtml, renderJobMd, extractJobId, buildFilename, exportJobAsPDF } = await loadCore();
+    const { parseBdjobsHtml, renderJobMd, extractJobId, buildFilename } = await loadCore();
     const jobId = extractJobId(inputValue);
     if (!jobId) {
       setStatus('Not a supported BDJobs job details URL.');
@@ -249,13 +322,8 @@ async function handleUrlDownload() {
 
     if (format === 'pdf') {
       setStatus('Generating PDF...');
-      await loadHtml2Pdf();
-      await exportJobAsPDF({
-        jobData: job,
-        markdown,
-        filename
-      });
-      setStatus(`Last snapped:\n${filename.replace(/\.md$/, '.pdf')}`);
+      const pdfFilename = await generatePDF(job, markdown, filename);
+      setStatus(`Last snapped:\n${pdfFilename}`);
     } else {
       downloadMarkdown({ filename, markdown });
       setStatus(`Last snapped:\n${filename}`);

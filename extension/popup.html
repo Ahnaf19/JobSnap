@@ -149,6 +149,19 @@
           <div class="subtitle">Save a BDJobs JD in one click.</div>
         </div>
       </div>
+      <div class="field">
+        <label>Download format</label>
+        <div class="checkbox-row">
+          <label class="checkbox">
+            <input type="radio" name="download-format" value="markdown" checked />
+            Markdown
+          </label>
+          <label class="checkbox">
+            <input type="radio" name="download-format" value="pdf" />
+            PDF
+          </label>
+        </div>
+      </div>
       <button id="download-tab" class="btn btn-primary">Download from current tab</button>
       <div class="divider">or</div>
       <div class="field">
@@ -177,19 +190,6 @@
           </label>
         </div>
         <div class="helper">Fixed order: title -> company -> job id</div>
-      </div>
-      <div class="field">
-        <label>Download format</label>
-        <div class="checkbox-row">
-          <label class="checkbox">
-            <input type="radio" name="download-format" value="markdown" checked />
-            Markdown
-          </label>
-          <label class="checkbox">
-            <input type="radio" name="download-format" value="pdf" />
-            PDF
-          </label>
-        </div>
       </div>
       <button id="download-url" class="btn btn-secondary">Download from URL</button>
       <div id="status"></div>
