@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 900">
+  <!-- Browser Window -->
+  <rect width="760" height="900" fill="#2d3748"/>
+
+  <!-- Browser Chrome -->
+  <rect width="760" height="60" fill="#1a202c" rx="8"/>
+
+  <!-- Traffic Lights -->
+  <circle cx="25" cy="30" r="6" fill="#ff5f56"/>
+  <circle cx="45" cy="30" r="6" fill="#ffbd2e"/>
+  <circle cx="65" cy="30" r="6" fill="#27c93f"/>
+
+  <!-- URL Bar -->
+  <rect x="100" y="15" width="550" height="30" fill="#f7fafc" rx="15"/>
+  <text x="120" y="35" font-family="system-ui, -apple-system" font-size="14" fill="#718096">
+    bdjobs.com/jobs/details/1234567
+  </text>
+
+  <!-- Extension Icon -->
+  <rect x="670" y="20" width="30" height="30" fill="#ed8936" rx="5"/>
+  <text x="680" y="40" font-family="system-ui" font-size="18" fill="#fff" font-weight="bold">J</text>
+
+  <!-- Extension Popup -->
+  <rect x="40" y="120" width="620" height="740" fill="#fff" rx="12" stroke="#e2e8f0" stroke-width="2"/>
+
+  <!-- Header -->
+  <g>
+    <!-- Logo -->
+    <rect x="60" y="150" width="60" height="60" fill="#ed8936" rx="8"/>
+    <text x="75" y="190" font-family="system-ui" font-size="30" fill="#fff" font-weight="bold">⇒</text>
+
+    <!-- Title -->
+    <text x="140" y="175" font-family="system-ui" font-size="32" fill="#1a202c" font-weight="bold">JobSnap</text>
+    <text x="140" y="200" font-family="system-ui" font-size="16" fill="#718096">Save a BDJobs JD in one click.</text>
+  </g>
+
+  <!-- Download Format Label -->
+  <text x="60" y="250" font-family="system-ui" font-size="16" fill="#4a5568" font-weight="600">Download format</text>
+
+  <!-- Radio Buttons -->
+  <!-- Markdown Radio (Selected) -->
+  <g>
+    <rect x="60" y="270" width="180" height="50" fill="#fff" rx="25" stroke="#ed8936" stroke-width="2"/>
+    <circle cx="90" cy="295" r="10" fill="#ed8936" stroke="#ed8936" stroke-width="2"/>
+    <circle cx="90" cy="295" r="5" fill="#fff"/>
+    <text x="115" y="302" font-family="system-ui" font-size="18" fill="#1a202c">Markdown</text>
+  </g>
+
+  <!-- PDF Radio (Unselected) -->
+  <g>
+    <rect x="270" y="270" width="120" height="50" fill="#fff" rx="25" stroke="#cbd5e0" stroke-width="2"/>
+    <circle cx="300" cy="295" r="10" fill="#fff" stroke="#cbd5e0" stroke-width="2"/>
+    <text x="325" y="302" font-family="system-ui" font-size="18" fill="#1a202c">PDF</text>
+  </g>
+
+  <!-- Download Button -->
+  <rect x="60" y="350" width="580" height="70" fill="#ed8936" rx="12"/>
+  <text x="220" y="395" font-family="system-ui" font-size="22" fill="#fff" font-weight="bold">Download from current tab</text>
+
+  <!-- OR Divider -->
+  <text x="315" y="460" font-family="system-ui" font-size="14" fill="#a0aec0">OR</text>
+
+  <!-- Paste BDJobs link Label -->
+  <text x="60" y="500" font-family="system-ui" font-size="16" fill="#4a5568" font-weight="600">Paste BDJobs link</text>
+
+  <!-- URL Input -->
+  <rect x="60" y="515" width="580" height="50" fill="#f7fafc" rx="8" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="80" y="545" font-family="system-ui" font-size="14" fill="#a0aec0">https://bdjobs.com/jobs/details/1234567</text>
+
+  <!-- Filename parts Label -->
+  <text x="60" y="600" font-family="system-ui" font-size="16" fill="#4a5568" font-weight="600">Filename parts</text>
+
+  <!-- Filename Checkboxes -->
+  <g>
+    <!-- Title -->
+    <rect x="60" y="620" width="120" height="40" fill="#fff" rx="20" stroke="#ed8936" stroke-width="2"/>
+    <rect x="75" y="632" width="18" height="18" fill="#ed8936" rx="3"/>
+    <path d="M 79 640 L 83 644 L 89 634" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <text x="105" y="644" font-family="system-ui" font-size="16" fill="#1a202c">Title</text>
+  </g>
+
+  <g>
+    <!-- Company -->
+    <rect x="210" y="620" width="160" height="40" fill="#fff" rx="20" stroke="#ed8936" stroke-width="2"/>
+    <rect x="225" y="632" width="18" height="18" fill="#ed8936" rx="3"/>
+    <path d="M 229 640 L 233 644 L 239 634" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <text x="255" y="644" font-family="system-ui" font-size="16" fill="#1a202c">Company</text>
+  </g>
+
+  <g>
+    <!-- Job ID -->
+    <rect x="400" y="620" width="130" height="40" fill="#fff" rx="20" stroke="#ed8936" stroke-width="2"/>
+    <rect x="415" y="632" width="18" height="18" fill="#ed8936" rx="3"/>
+    <path d="M 419 640 L 423 644 L 429 634" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <text x="445" y="644" font-family="system-ui" font-size="16" fill="#1a202c">Job ID</text>
+  </g>
+
+  <!-- Fixed order text -->
+  <text x="60" y="690" font-family="system-ui" font-size="14" fill="#718096">Fixed order: title -&gt; company -&gt; job id</text>
+
+  <!-- Download from URL Button -->
+  <rect x="60" y="720" width="580" height="70" fill="#f7fafc" rx="12" stroke="#e2e8f0" stroke-width="2"/>
+  <text x="230" y="760" font-family="system-ui" font-size="20" fill="#1a202c" font-weight="bold">Download from URL</text>
+
+  <!-- Step Indicator -->
+  <rect x="40" y="80" width="280" height="30" fill="#ed8936" rx="5"/>
+  <text x="55" y="100" font-family="system-ui" font-size="14" fill="#fff" font-weight="600">2. Choose format &amp; download</text>
+</svg>
