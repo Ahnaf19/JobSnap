@@ -3,7 +3,7 @@
   <h1>JobSnap</h1>
   <p><strong>Save BDJobs circulars before they disappear.</strong></p>
   <p>
-    <a href="https://github.com/Ahnaf19/jobsnap/releases"><img src="https://img.shields.io/badge/version-v1.0.0-ff6a3d" alt="Version" /></a>
+    <a href="https://github.com/Ahnaf19/jobsnap/releases"><img src="https://img.shields.io/badge/version-v2.0.0-ff6a3d" alt="Version" /></a>
     <a href="#requirements"><img src="https://img.shields.io/badge/node-18%2B-3c873a?logo=node.js&logoColor=white" alt="Node.js" /></a>
     <img src="https://img.shields.io/badge/javascript-ES2022-f7df1e?logo=javascript&logoColor=000" alt="JavaScript" />
     <img src="https://img.shields.io/badge/Chrome-MV3-4285f4?logo=googlechrome&logoColor=white" alt="Chrome" />
@@ -24,9 +24,10 @@
 
 `JobSnap` fixes this:
 
-- 💻 **CLI:** `jobsnap save <url>`
-- 🌐 **Extension:** One-click from your browser
+- 💻 **CLI:** `jobsnap save <url>`, `jobsnap list`, `jobsnap export`
+- 🌐 **Extension:** One-click download (Markdown or PDF)
 
+<!-- TODO: Update demo GIF to show v2.0 features (list, export commands) -->
 ![JobSnap demo](assets/jobsnap-demo.gif)
 
 ## What JobSnap Does
@@ -136,9 +137,11 @@ jobsnap save "https://bdjobs.com/jobs/details/1436687" --skip
 | ----------------------- | ------------------------------------------------------------------- |
 | 🔒 **Offline-First**    | Your data stays on your disk. No cloud dependencies.                |
 | 🤖 **AI-Ready**         | Clean Markdown works seamlessly with ChatGPT, Claude, etc.          |
+| 📋 **List & Filter**    | View, sort, and filter saved jobs by deadline, company, or tags.    |
+| 📄 **PDF Export**       | Export jobs to professional PDFs or HTML with one command.          |
 | 🔄 **Future-Proof**     | Re-parse old snapshots if BDJobs changes their format.              |
 | ⚡ **Dual-Path Parser** | Extracts embedded JSON + text fallback for resilience.              |
-| 📋 **Stable Contract**  | v1.0 guarantees consistent output format across updates.            |
+| 🎯 **Smart Dates**      | Unambiguous date format (Jan 08, 2026) prevents confusion.          |
 | 🎨 **Flexible Output**  | Customize filenames with templates: `{title}_{company}_{job_id}.md` |
 | 🧪 **Tested**           | Unit tests, schema validation, fixture regression suite.            |
 | 🌐 **Two Interfaces**   | CLI for power users, Chrome extension for one-click saves.          |
@@ -166,11 +169,13 @@ jobsnap save "https://bdjobs.com/jobs/details/1436687" --skip
 
 ## CLI Commands
 
-| Command                 | Description                       |
-| ----------------------- | --------------------------------- |
-| `jobsnap save <url>`    | Fetch and save a BDJobs circular  |
-| `jobsnap reparse <dir>` | Re-parse from existing `raw.html` |
-| `jobsnap --help`        | Show usage information            |
+| Command                    | Description                                    |
+| -------------------------- | ---------------------------------------------- |
+| `jobsnap save <url>`       | Fetch and save a BDJobs circular               |
+| `jobsnap list`             | List all saved jobs with filtering/sorting     |
+| `jobsnap export <job_dir>` | Export job to PDF or HTML                      |
+| `jobsnap reparse <dir>`    | Re-parse from existing `raw.html`              |
+| `jobsnap --help`           | Show usage information                         |
 
 ### Common Options
 
@@ -342,25 +347,32 @@ npm test
 
 ## Roadmap
 
-### v1.0 (Current) ✅
+### v1.0 ✅
 
 - Stable output contract
 - Dual-path parser with fallback
 - CLI + Chrome extension
 - Regression test suite
 
-### v2.0 (Finger crossed!)
+### v2.0 (Current) ✅
+
+- 📋 **List command** - View, sort, and filter saved jobs
+- 📄 **PDF/HTML export** - Export jobs to PDF or HTML with professional styling
+- 🎨 **Enhanced extension** - PDF download with native Chrome support
+- 📅 **Date standardization** - Unambiguous date format (MMM DD, YYYY)
+
+### v3.0 (Planned)
 
 - 🤖 **LLM-powered JD summaries** - Extract must-haves vs nice-to-haves
 - 📊 **CV gap analysis** - Compare resume against saved JDs
 - 📝 **Interview prep** - Auto-generate topic checklists
-- 🔍 **Local search** - Grep-like search with tagging
+- 🏷️ **Tagging system** - Tag and categorize saved jobs
 
-### v3.0+ (Future)
+### v4.0+ (Future)
 
 - 🌍 **Multi-platform** - LinkedIn, Glassdoor, etc.
-- 📄 **PDF export** - Customizable templates
 - 🇧🇩 **Bangla support** - Local job board compatibility
+- 🔍 **Advanced search** - Full-text search across all saved jobs
 
 ---
 
