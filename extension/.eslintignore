@@ -1,0 +1,3 @@
+# Ignore minified third-party libraries
+html2pdf.bundle.min.js
+*.min.js

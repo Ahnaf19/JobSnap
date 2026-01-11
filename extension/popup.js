@@ -1,6 +1,7 @@
 const statusEl = document.getElementById('status');
 const urlInput = document.getElementById('url-input');
 const filenamePartInputs = Array.from(document.querySelectorAll('input[name="filename-part"]'));
+const formatInputs = Array.from(document.querySelectorAll('input[name="download-format"]'));
 const downloadTabBtn = document.getElementById('download-tab');
 const downloadUrlBtn = document.getElementById('download-url');
 const DEFAULT_TEMPLATE = '{title}_{company}_{job_id}.md';
@@ -23,6 +24,14 @@ function setBusy(isBusy) {
   filenamePartInputs.forEach((input) => {
     input.disabled = isBusy;
   });
+  formatInputs.forEach((input) => {
+    input.disabled = isBusy;
+  });
+}
+
+function getSelectedFormat() {
+  const selected = formatInputs.find((input) => input.checked);
+  return selected?.value || 'markdown';
 }
 
 function getSelectedParts() {
@@ -78,16 +87,114 @@ async function loadCore() {
       import(chrome.runtime.getURL('core/parseBdjobsHtml.js')),
       import(chrome.runtime.getURL('core/renderJobMd.js')),
       import(chrome.runtime.getURL('core/extractJobId.js')),
-      import(chrome.runtime.getURL('core/filename.js'))
+      import(chrome.runtime.getURL('core/filename.js')),
+      import(chrome.runtime.getURL('core/exportPdf.js'))
     ]);
   }
   const [
     { parseBdjobsHtml },
     { renderJobMd },
     { extractJobId },
-    { buildFilename }
+    { buildFilename },
+    { exportJobAsPDF }
   ] = await corePromise;
-  return { parseBdjobsHtml, renderJobMd, extractJobId, buildFilename };
+  return { parseBdjobsHtml, renderJobMd, extractJobId, buildFilename, exportJobAsPDF };
+}
+
+let html2pdfLoaded = false;
+async function loadHtml2Pdf() {
+  if (html2pdfLoaded) return;
+
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = chrome.runtime.getURL('html2pdf.bundle.min.js');
+    script.onload = () => {
+      html2pdfLoaded = true;
+      resolve();
+    };
+    script.onerror = () => reject(new Error('Failed to load html2pdf library'));
+    document.head.appendChild(script);
+  });
+}
+
+/**
+ * Check if native PDF generation is available (Chrome/Edge only)
+ */
+function hasNativePDFSupport() {
+  return typeof chrome.tabs !== 'undefined' &&
+         typeof chrome.tabs.printToPDF === 'function';
+}
+
+/**
+ * Generate PDF using Chrome's native print engine (vector PDF)
+ */
+async function generatePDF_Native(jobData, markdown, filename) {
+  // Generate HTML using same template
+  const { generateJobHTML, stripMetadata } = await import(chrome.runtime.getURL('core/exportPdf.js'));
+  const cleanedMd = stripMetadata(markdown);
+  const html = generateJobHTML(jobData, cleanedMd);
+
+  // Send to service worker for native PDF generation
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(
+      {
+        type: 'GENERATE_PDF_NATIVE',
+        html,
+        filename
+      },
+      (response) => {
+        if (response?.success) {
+          // Download the PDF
+          const blob = new Blob([new Uint8Array(response.pdfData)], { type: 'application/pdf' });
+          const url = URL.createObjectURL(blob);
+          const pdfFilename = response.filename;
+
+          chrome.downloads.download(
+            {
+              url,
+              filename: pdfFilename,
+              saveAs: true
+            },
+            () => {
+              URL.revokeObjectURL(url);
+              resolve(pdfFilename);
+            }
+          );
+        } else {
+          reject(new Error(response?.error || 'PDF generation failed'));
+        }
+      }
+    );
+  });
+}
+
+/**
+ * Generate PDF using html2pdf.js fallback (rasterized PDF)
+ */
+async function generatePDF_Fallback(jobData, markdown, filename) {
+  await loadHtml2Pdf();
+  const { exportJobAsPDF } = await loadCore();
+
+  await exportJobAsPDF({
+    jobData,
+    markdown,
+    filename
+  });
+
+  return filename.replace(/\.md$/, '.pdf');
+}
+
+/**
+ * Generate PDF using best available method
+ */
+async function generatePDF(jobData, markdown, filename) {
+  if (hasNativePDFSupport()) {
+    // Chrome/Edge: Use native PDF (vector, ~200KB)
+    return await generatePDF_Native(jobData, markdown, filename);
+  } else {
+    // Firefox/Safari: Use html2pdf.js (raster, ~400KB)
+    return await generatePDF_Fallback(jobData, markdown, filename);
+  }
 }
 
 function downloadMarkdown({ filename, markdown }) {
@@ -104,6 +211,7 @@ function downloadMarkdown({ filename, markdown }) {
 }
 
 async function handleCurrentTab() {
+  const format = getSelectedFormat();
   setStatus('Working...');
   setBusy(true);
   try {
@@ -135,13 +243,41 @@ async function handleCurrentTab() {
       setStatus(response?.error || 'Could not extract content on this page.');
       return;
     }
-    downloadMarkdown({ filename: response.filename, markdown: response.markdown });
-    setStatus(`Last snapped:\n${response.filename}`);
+
+    if (format === 'pdf') {
+      setStatus('Generating PDF...');
+      const jobData = extractJobDataFromResponse(response);
+      const pdfFilename = await generatePDF(jobData, response.markdown, response.filename);
+      setStatus(`Last snapped:\n${pdfFilename}`);
+    } else {
+      downloadMarkdown({ filename: response.filename, markdown: response.markdown });
+      setStatus(`Last snapped:\n${response.filename}`);
+    }
   } catch (err) {
     setStatus(String(err?.message ?? err));
   } finally {
     setBusy(false);
   }
+}
+
+function extractJobDataFromResponse(response) {
+  // Parse YAML frontmatter to extract job metadata
+  const lines = response.markdown.split('\n');
+  const jobData = {};
+
+  if (lines[0] === '---') {
+    let i = 1;
+    while (i < lines.length && lines[i] !== '---') {
+      const match = lines[i].match(/^(\w+):\s*(.+)$/);
+      if (match) {
+        const [, key, value] = match;
+        jobData[key] = value.replace(/^["']|["']$/g, ''); // Remove quotes
+      }
+      i++;
+    }
+  }
+
+  return jobData;
 }
 
 async function handleUrlDownload() {
@@ -151,6 +287,7 @@ async function handleUrlDownload() {
     return;
   }
 
+  const format = getSelectedFormat();
   setStatus('Fetching...');
   setBusy(true);
   try {
@@ -182,8 +319,15 @@ async function handleUrlDownload() {
       company: job.company,
       jobId: job.job_id ?? jobId
     });
-    downloadMarkdown({ filename, markdown });
-    setStatus(`Last snapped:\n${filename}`);
+
+    if (format === 'pdf') {
+      setStatus('Generating PDF...');
+      const pdfFilename = await generatePDF(job, markdown, filename);
+      setStatus(`Last snapped:\n${pdfFilename}`);
+    } else {
+      downloadMarkdown({ filename, markdown });
+      setStatus(`Last snapped:\n${filename}`);
+    }
   } catch (err) {
     setStatus(String(err?.message ?? err));
   } finally {

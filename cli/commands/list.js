@@ -88,6 +88,25 @@ export async function listCommand(options = {}) {
 }
 
 /**
+ * Formats a date string consistently
+ *
+ * @param {string} dateString - ISO or human-readable date string
+ * @returns {string} - Formatted date (e.g., "Jan 08, 2026")
+ */
+function formatDate(dateString) {
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit'
+    });
+  } catch (err) {
+    return dateString;
+  }
+}
+
+/**
  * Formats a deadline with color coding based on urgency
  *
  * @param {string} deadline - ISO 8601 date string
@@ -97,19 +116,20 @@ function formatDeadline(deadline) {
   const date = new Date(deadline);
   const now = new Date();
   const daysLeft = Math.ceil((date - now) / (1000 * 60 * 60 * 24));
+  const formattedDate = formatDate(deadline);
 
   if (daysLeft < 0) {
     const daysAgo = Math.abs(daysLeft);
-    return chalk.red(`Expired ${daysAgo}d ago`);
+    return chalk.red(`Expired ${daysAgo}d ago (${formattedDate})`);
   } else if (daysLeft === 0) {
-    return chalk.yellow.bold('Today!');
+    return chalk.yellow.bold(`Today! (${formattedDate})`);
   } else if (daysLeft === 1) {
-    return chalk.yellow('Tomorrow');
+    return chalk.yellow(`Tomorrow (${formattedDate})`);
   } else if (daysLeft <= 3) {
-    return chalk.yellow(`${daysLeft}d left`);
+    return chalk.yellow(`${daysLeft}d left (${formattedDate})`);
   } else if (daysLeft <= 7) {
-    return chalk.green(`${daysLeft}d left`);
+    return chalk.green(`${daysLeft}d left (${formattedDate})`);
   } else {
-    return chalk.gray(`${daysLeft}d left`);
+    return chalk.gray(`${daysLeft}d left (${formattedDate})`);
   }
 }
