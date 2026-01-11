@@ -1,0 +1,4 @@
+node_modules/
+dist/
+*.min.js
+extension/html2pdf.bundle.min.js
