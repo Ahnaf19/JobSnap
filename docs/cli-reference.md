@@ -95,6 +95,158 @@ jobs/index.jsonl
 
 ---
 
+### `list`
+
+List all saved jobs with sorting, filtering, and grouping options.
+
+**Usage:**
+
+```bash
+jobsnap list [options]
+```
+
+**Options:**
+
+- `--sort <field>` - Sort by: `deadline` (default), `company`, `title`, `saved`
+- `--active` - Show only active jobs (deadline not passed)
+- `--expired` - Show only expired jobs (deadline passed)
+- `--tag <tag>` - Filter by tag (e.g., `--tag backend`)
+- `--group-by <field>` - Group by: `company` or `deadline`
+
+**Examples:**
+
+List all jobs sorted by deadline (default):
+
+```bash
+jobsnap list
+```
+
+Show only active jobs:
+
+```bash
+jobsnap list --active
+```
+
+Sort by company alphabetically:
+
+```bash
+jobsnap list --sort company
+```
+
+Filter by tag:
+
+```bash
+jobsnap list --tag remote
+```
+
+Group by company:
+
+```bash
+jobsnap list --group-by company
+```
+
+Show expired jobs sorted by company:
+
+```bash
+jobsnap list --expired --sort company
+```
+
+**What it does:**
+
+1. Reads `jobs/index.jsonl`
+2. Parses and validates all job entries
+3. Applies filters (active/expired/tag)
+4. Sorts by specified field
+5. Groups if requested
+6. Displays formatted output with color-coded deadlines
+
+**Output format:**
+
+```
+┌─────────┬──────────────────────┬────────────────┬─────────────┐
+│ Job ID  │ Title                │ Company        │ Deadline    │
+├─────────┼──────────────────────┼────────────────┼─────────────┤
+│ 1445561 │ Graphic Designer     │ Eden Study     │ 23d left    │
+│ 1436685 │ Senior Engineer      │ ABC Tech       │ 15d left    │
+└─────────┴──────────────────────┴────────────────┴─────────────┘
+```
+
+**Deadline color coding:**
+
+- 🔴 Red: Expired
+- 🟡 Yellow: 3 days or less
+- 🟢 Green: 4-7 days
+- ⚪ Gray: More than 7 days
+
+---
+
+### `export`
+
+Export a saved job to PDF or HTML format.
+
+**Usage:**
+
+```bash
+jobsnap export <job_dir> [options]
+```
+
+**Arguments:**
+
+- `<job_dir>` - Path to job directory (e.g., `jobs/1436685`)
+
+**Options:**
+
+- `--format <type>` - Export format: `pdf` (default) or `html`
+
+**Examples:**
+
+Export to PDF (default):
+
+```bash
+jobsnap export jobs/1436685
+```
+
+Export to HTML:
+
+```bash
+jobsnap export jobs/1436685 --format html
+```
+
+**What it does:**
+
+1. Reads `job.json` and `job.md` from the specified directory
+2. Generates styled HTML with professional layout
+3. For PDF: Uses Puppeteer (headless Chrome) to render vector PDF
+4. For HTML: Saves standalone HTML file
+5. Updates `index.jsonl` with `has_pdf: true` metadata
+
+**Output:**
+
+```
+jobs/1436685/
+  raw.html
+  job.json
+  job.md
+  job.pdf          ← New PDF file (~200KB)
+  # or
+  job.html         ← New HTML file
+```
+
+**PDF Features:**
+
+- Vector-based (crisp quality, small file size ~200KB)
+- Professional styling with metadata header
+- Consistent branding and layout
+- Print-optimized margins and page breaks
+- Unambiguous date format (Jan 08, 2026)
+
+**Requirements:**
+
+- Puppeteer is automatically installed with JobSnap
+- No additional setup needed
+
+---
+
 ### `reparse`
 
 Re-parse an existing `raw.html` snapshot without re-downloading.
